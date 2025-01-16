@@ -1,0 +1,8 @@
+{
+  "src/js/main.entry.js": {
+    "file": "src/js/main.js",
+    "name": "main",
+    "src": "src/js/main.entry.js",
+    "isEntry": true
+  }
+}
