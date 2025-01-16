@@ -19,6 +19,7 @@
     "typo3fluid",
     "typo3-12"
   ],
+
   "type": "module",
   "license": "MIT",
   "main": "./src/js/main.entry.js",
@@ -28,12 +29,14 @@
     "README.md",
     "*.js"
   ],
+
   "scripts": {
     "storybook": "storybook dev -p 6006",
     "storybook:build": "build-storybook -o ../public/storybook",
     "watch": "vite build --watch --mode development",
     "build": "vite build --mode production",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "@babel/cli": "^7.26.4",
