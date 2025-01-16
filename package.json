@@ -1,0 +1,58 @@
+{
+  "name": "typo3fluid2storybook-addon",
+  "version": "0.0.1",
+  "description": "Render TYPO3 Fluid templates inside Storybook.",
+  "homepage": "https://github.com/CasianBlanaru/typo3fluid-to-storybook",
+  "bugs": {
+    "url": "https://github.com/CasianBlanaru/storybook-typo3fluid/issues",
+    "email": "casianus@me.com"
+  },
+  "author": "Casian Blanaru",
+  "keywords": [
+    "storybook-plugin-typo3fluid",
+    "storybook-addon",
+    "addon",
+    "plugin",
+    "storybook",
+    "template",
+    "typo3",
+    "typo3fluid",
+    "typo3-12"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "main": "./src/js/main.entry.js",
+  "module": "dist/main.entry.js",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "*.js"
+  ],
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "build-storybook -o ../public/storybook",
+    "watch": "vite build --watch --mode development",
+    "build": "vite build --mode production",
+    "build-storybook": "storybook build"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.26.4",
+    "@babel/preset-env": "^7.26.0",
+    "@chromatic-com/storybook": "^3.2.3",
+    "@storybook/addon-essentials": "^8.5.0",
+    "@storybook/addon-interactions": "^8.5.0",
+    "@storybook/blocks": "^8.5.0",
+    "@storybook/core-server": "^8.3.4",
+    "@storybook/html": "^8.5.0",
+    "@storybook/html-vite": "^8.5.0",
+    "@storybook/manager-api": "^8.5.0",
+    "@storybook/react": "^8.5.0",
+    "@storybook/test": "^8.5.0",
+    "storybook": "^8.5.0",
+    "vite": "6.0.7"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.0",
+    "vite-plugin-clean": "^1.0.0"
+  }
+}
