@@ -429,10 +429,7 @@ This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/Complex
       <p>No items to display.</p>
   </f:if>
 </div>
-```
-This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
-```
-
+``
 ---
 
 ## Benefits
