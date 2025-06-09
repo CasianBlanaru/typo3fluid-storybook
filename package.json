@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
+    "minimist": "^1.2.8",
     "vite-plugin-clean": "^1.0.0"
   }
 }

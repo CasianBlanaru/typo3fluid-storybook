@@ -443,6 +443,201 @@ This example illustrates how complex data structures managed by Storybook contro
 
 ---
 
+## Automated Fluid Template Discovery
+
+To simplify the process of finding and referencing Fluid templates in your Storybook stories, this project includes a discovery script.
+
+### Overview
+
+The script (`scripts/discover-fluid-templates.js`) scans specified TYPO3 extension directories for Fluid template files (`.html`). It then generates a JSON map where keys are convenient aliases for the templates and values are their full `EXT:extension_key/...` paths.
+
+This JSON map can be imported into your Storybook setup (e.g., in `preview.js` or individual stories) to provide an easy way to select or switch between Fluid templates, especially for `argTypes` controls.
+
+### Installation Notes
+
+The script is located at `scripts/discover-fluid-templates.js`. It uses the `minimist` package for command-line argument parsing. If you've cloned this repository and run `npm install`, `minimist` (being a dependency of this package, or it should be added as a devDependency if frequently used for scripts) should be available.
+
+The script is designed to be run in a Node.js environment.
+
+### Usage
+
+To run the script, use the following command-line syntax:
+
+```bash
+node scripts/discover-fluid-templates.js --extensions <paths_to_extensions> [--output <output_file_path>]
+```
+
+**Arguments:**
+
+*   `--extensions <paths_to_extensions>`: **(Required)**
+    *   A comma-separated list of local file system paths to your TYPO3 extension directories.
+    *   Ensure there are no spaces around the commas if providing multiple paths.
+    *   Example:
+        ```bash
+        node scripts/discover-fluid-templates.js --extensions "path/to/typo3conf/ext/my_site_package,../another_project/typo3conf/ext/my_other_extension"
+        ```
+    *   Or for a single extension:
+        ```bash
+        node scripts/discover-fluid-templates.js --extensions "./path/to/your_extension"
+        ```
+
+*   `--output <output_file_path>`: (Optional)
+    *   The file path where the generated JSON map of templates will be saved.
+    *   Defaults to: `.storybook/fluid-templates.json`.
+    *   Example:
+        ```bash
+        node scripts/discover-fluid-templates.js --extensions "path/to/ext" --output "config/fluid_template_map.json"
+        ```
+
+The script will log its progress, including any errors (like invalid paths) and a summary of templates found.
+
+### Output Format
+
+The script generates a JSON file containing an object.
+*   **Keys:** Generated aliases for each Fluid template. The alias format is `PascalCaseExtensionKey_DirectoryType_Path_FileName`.
+    *   `PascalCaseExtensionKey`: The extension key, converted to PascalCase (e.g., `my_extension` becomes `MyExtension`).
+    *   `DirectoryType`: Can be `Templates`, `Partials`, or `Layouts`.
+    *   `Path_FileName`: The relative path to the template file within its directory type, with directory separators (`/` or `\`) replaced by underscores, and the `.html` extension removed.
+    *   Example alias: `MySitePackage_Templates_Page_Default` or `MyExtension_Partials_Common_Header`.
+*   **Values:** The full `EXT:extension_key/Path/To/Template.html` string for the corresponding Fluid template.
+
+**Example JSON Output (`.storybook/fluid-templates.json`):**
+
+```json
+{
+  "MySitePackage_Templates_Content_TextMedia": "EXT:my_site_package/Resources/Private/Templates/Content/TextMedia.html",
+  "MySitePackage_Partials_Navigation_MainMenu": "EXT:my_site_package/Resources/Private/Partials/Navigation/MainMenu.html",
+  "AnotherExt_Templates_MyElement": "EXT:another_ext/Resources/Private/Templates/MyElement.html"
+}
+```
+
+### Using the Generated JSON in Storybook Stories
+
+Once you have generated the `fluid-templates.json` file (or your custom named output file), you can import it into your Storybook stories to create a dynamic template selector. This allows you to easily switch between different Fluid templates using Storybook's Controls addon.
+
+**Example Storybook Story (`.stories.js`):**
+
+```javascript
+// Example: src/stories/FluidTemplateViewer.stories.js
+
+// Adjust the path to where you copied FluidTemplate.js
+import FluidTemplate from '../../.storybook/typo3FluidTemplates';
+// Adjust the path to your generated JSON file
+import templatePathsByName from '../../.storybook/fluid-templates.json';
+
+export default {
+  title: 'TYPO3 Fluid Viewer',
+  parameters: {
+    layout: 'padded', // Or 'centered', 'fullscreen'
+  },
+  argTypes: {
+    selectedTemplate: {
+      name: 'Select Fluid Template',
+      description: 'Choose a Fluid template to render. The paths are sourced from the generated JSON file.',
+      control: 'select',
+      options: Object.keys(templatePathsByName), // Display aliases in the dropdown
+      mapping: templatePathsByName, // Map the selected alias to its full EXT:path string
+    },
+    // --- Example Fluid Variables ---
+    // Add argTypes for variables that your Fluid templates might commonly use.
+    // These will appear as controls in Storybook.
+    headline: {
+      name: 'Headline Text',
+      control: 'text',
+      defaultValue: 'Welcome to Fluid in Storybook!',
+      description: 'A headline variable often used in templates.',
+    },
+    text: {
+      name: 'Body Text',
+      control: 'text', // 'text' for long text, or 'string' for short
+      defaultValue: 'This is some sample text passed as a variable to the Fluid template.',
+    },
+    // Example of an object variable for more complex data
+    author: {
+      name: 'Author Data (Object)',
+      control: 'object',
+      defaultValue: {
+        name: 'Max Mustermann',
+        email: 'max.mustermann@example.com',
+        role: 'Content Editor'
+      }
+    }
+  },
+};
+
+const Template = (args) => {
+  // Destructure args: selectedTemplate is the full EXT:path due to 'mapping'
+  // Other args are collected into 'fluidVariables' to be passed to the template
+  const { selectedTemplate, ...fluidVariables } = args;
+
+  if (!selectedTemplate || Object.keys(templatePathsByName).length === 0) {
+    if (Object.keys(templatePathsByName).length === 0) {
+      return `
+        <div style="padding: 20px; border: 1px dashed #ccc; background-color: #f9f9f9;">
+          <strong>No Fluid templates found in the JSON map.</strong>
+          <p>Please run the discovery script: <code>node scripts/discover-fluid-templates.js --extensions "path/to/your/extensions"</code></p>
+        </div>
+      `;
+    }
+    return `
+      <div style="padding: 20px; border: 1px solid #eee; background-color: #fafafa;">
+        <p>Please select a Fluid template from the "Select Fluid Template" control in the Controls panel.</p>
+      </div>
+    `;
+  }
+
+  // Call FluidTemplate with the chosen template path and the rest of the args as variables
+  const htmlOutput = FluidTemplate({
+    templatePath: selectedTemplate,
+    variables: fluidVariables,
+  });
+
+  return `<div class="fluid-story-render">${htmlOutput}</div>`;
+};
+
+export const Viewer = Template.bind({});
+
+// Determine the first available template alias for default selection
+const availableTemplateAliases = Object.keys(templatePathsByName);
+const defaultTemplateAlias = availableTemplateAliases.length > 0 ? availableTemplateAliases[0] : undefined;
+
+Viewer.args = {
+  // Set the default selected template using its alias.
+  // Storybook will use the 'mapping' to pass the actual EXT:path to the Template function.
+  selectedTemplate: defaultTemplateAlias,
+  // Default values for other variables are taken from argTypes.defaultValue
+  // but can be overridden here if needed for this specific story.
+  // headline: "Custom Headline for this Story",
+};
+
+// Add a note about keeping the JSON file updated
+if (Object.keys(templatePathsByName).length > 0) {
+    Viewer.parameters = {
+        ...Viewer.parameters,
+        notes: `This story uses a dynamic list of Fluid templates from \`fluid-templates.json\`.
+                If you add or remove templates in your TYPO3 extensions, remember to re-run
+                the \`scripts/discover-fluid-templates.js\` script to update the list.`,
+    };
+}
+```
+
+**Explanation:**
+
+1.  **Import Templates:** The generated JSON file (`fluid-templates.json` in this example) is imported. This provides an object where keys are the user-friendly aliases and values are the actual `EXT:` paths.
+2.  **Configure `argTypes`:**
+    *   An `argType` (e.g., `selectedTemplate`) is configured with `control: 'select'`.
+    *   `options: Object.keys(templatePathsByName)` populates the select dropdown with the template aliases from the JSON file.
+    *   `mapping: templatePathsByName` tells Storybook that when an alias is selected from the dropdown, the actual value passed to the story's `args` (and thus to the `Template` function) should be the corresponding value (the `EXT:` path) from the `templatePathsByName` object.
+3.  **Template Function:**
+    *   The `Template` function receives the actual `EXT:` path in `args.selectedTemplate` because of the `mapping`.
+    *   It checks if a template is selected and, if so, calls `FluidTemplate` with this path and any other args as variables.
+4.  **Default Selection:** The story's default `args` can be set to select the first template found in the JSON map, ensuring a template is rendered by default.
+5.  **Keep Updated:** Remember to re-run the `discover-fluid-templates.js` script whenever you add, remove, or rename Fluid templates in your TYPO3 extensions to keep the `fluid-templates.json` file and your Storybook template selector up-to-date.
+
+This setup provides a powerful way to browse and test all your discovered Fluid templates directly within Storybook using a simple dropdown control.
+
+---
+
 ## Contributing
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
