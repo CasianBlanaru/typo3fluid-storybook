@@ -16,11 +16,8 @@ export const FluidTemplate = ({
 }) => {
   const apiUrl = process.env.TYPO3FLUID_STORYBOOK_API_URL ?? '';
   if (!apiUrl) {
-    console.error('API URL is not defined in .env file');
-    return 'Error: API URL is not configured';
+    return 'Error: TYPO3FLUID_STORYBOOK_API_URL is not defined. Please set it in your .env file.';
   }
-
-  console.log('API URL:', apiUrl);
 
   const requestBody = {
     templatePath,
@@ -29,57 +26,95 @@ export const FluidTemplate = ({
     layout,
   };
 
-  console.log('Request Body:', JSON.stringify(requestBody, null, 2));
+  try {
+    const request = new XMLHttpRequest();
+    request.open('POST', apiUrl, false); // `false` makes the request synchronous
+    request.setRequestHeader('Accept', 'application/json');
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.send(JSON.stringify(requestBody));
 
-  const request = new XMLHttpRequest();
-  request.open('POST', apiUrl, false);
-  request.setRequestHeader('Accept', 'application/json');
-  request.setRequestHeader('Content-Type', 'application/json');
-  request.send(JSON.stringify(requestBody));
+    if (request.status === 200) {
+      let response;
+      try {
+        response = JSON.parse(request.responseText);
+      } catch (error) {
+        const truncatedResponse = request.responseText && request.responseText.length > 200
+          ? `${request.responseText.substring(0, 200)}...`
+          : request.responseText;
+        return `Error: Could not parse JSON response from API. Raw response: ${truncatedResponse}`;
+      }
 
-  console.log('Request Status:', request.status);
-  console.log('Raw Response Text:', request.responseText);
+      if (response.error) {
+        return `Error from TYPO3 API: ${response.error}`;
+      }
 
-  if (request.status === 200) {
-    let response;
-    try {
-      response = JSON.parse(request.responseText);
-    } catch (error) {
-      console.error('Error parsing response:', error);
-      return request.responseText;
+      // Convert html response to string, defaulting null/undefined to empty string.
+      // Primitives like numbers/booleans will be stringified.
+      let html = response.html === null || typeof response.html === 'undefined' ? '' : String(response.html);
+
+      // Attempt to derive baseUrl for asset rewriting.
+      // This regex will match up to the last '/' before 'fluid/render' or similar API paths.
+      const apiPathRegex = /\/(?:fluid\/render|api\/fluid|[^/]+)$/;
+      const baseUrlMatch = apiUrl.match(/^(.*)(?=\/)/); // Get everything before the last segment
+      let baseUrl = '';
+      if (baseUrlMatch && baseUrlMatch[0]) {
+          // If apiUrl is "https://example.com/foo/bar/api/fluid/render",
+          // we want "https://example.com/" not "https://example.com/foo/bar/api/fluid/"
+          // We need to make sure the API path is correctly removed.
+          // A simple way: use URL object if available, or a more robust regex for common patterns.
+          try {
+            const urlObject = new URL(apiUrl);
+            baseUrl = `${urlObject.protocol}//${urlObject.host}/`; // Results in "https://example.com/"
+          } catch (e) {
+            // Fallback for environments where URL global might not be standard (less common now)
+            // or if apiUrl is not a full URL.
+            // This fallback is simplistic and might need adjustment based on expected apiUrl structures.
+             const pathParts = apiUrl.split('/');
+             if (pathParts.length > 3) { // http: / / domain / ...
+                baseUrl = `${pathParts.slice(0, 3).join('/')}/`;
+             } else {
+                baseUrl = apiUrl; // Or handle as error / warning
+             }
+          }
+      } else {
+          // If apiUrl is very simple, e.g. "/api/fluid/render" (relative path, though not expected for .env)
+          // then baseUrl might be empty or need different handling. For now, assume full URL.
+          baseUrl = '/'; // Default to root relative if base URL extraction fails.
+      }
+
+      // Prepend baseUrl to typo3temp paths
+      html = html.replace(
+        /src="typo3temp\/([^"]+)"/g,
+        (match, path) => `src="${baseUrl}typo3temp/${path}"`
+      );
+      html = html.replace(
+        /href="typo3temp\/([^"]+)"/g,
+        (match, path) => `href="${baseUrl}typo3temp/${path}"`
+      );
+
+      // The DOMParser and formatting step seems to be for debugging or specific display needs.
+      // If it's purely for debugging, it could be removed.
+      // If it's for ensuring the HTML is well-formed or extracting body content, it can stay.
+      // For now, it's kept as it was, but this could be a point of simplification if not strictly needed.
+      const parser = new DOMParser();
+      const parsedHtml = parser.parseFromString(html, 'text/html');
+      // Ensure parsedHtml.body exists before trying to access innerHTML
+      const formattedHtml = parsedHtml.body ? parsedHtml.body.innerHTML : html;
+
+      return formattedHtml; // Return the potentially modified HTML
+    } else if (request.status === 0) {
+      return `Error: Could not connect to API. Check network, CORS settings, and TYPO3FLUID_STORYBOOK_API_URL (${apiUrl}). (Status 0)`;
+    } else {
+      const truncatedResponse = request.responseText && request.responseText.length > 200
+        ? `${request.responseText.substring(0, 200)}...`
+        : request.responseText;
+      return `Error: API request failed. Status: ${request.status}. Response: ${truncatedResponse}`;
     }
-
-    if (response.error) {
-      console.error('Response Error:', response.error);
-      return response.error;
-    }
-
-    const baseUrl = apiUrl.replace(/\/fluid\/render$/, '/');
-    let html = response.html;
-    html = html.replace(
-      /src="(typo3temp\/[^"]+)"/g,
-      (match, path) => `src="${baseUrl}${path}"`
-    );
-    html = html.replace(
-      /href="(typo3temp\/[^"]+)"/g,
-      (match, path) => `href="${baseUrl}${path}"`
-    );
-
-    const parser = new DOMParser();
-    const parsedHtml = parser.parseFromString(html, 'text/html');
-    const formattedHtml = parsedHtml.body.innerHTML;
-
-    console.log(
-      '%cFormatted HTML:',
-      'color: purple; font-weight: bold; text-decoration: underline; background-color: #f4f4f4; padding: 4px;',
-      formattedHtml
-    );
-
-    return html;
+  } catch (e) {
+    // Catch any unexpected errors during request setup or other synchronous operations
+    // that are not related to the HTTP request status itself.
+    return `Error: An unexpected error occurred while trying to fetch the Fluid template. ${e.message || ''}`.trim();
   }
-
-  console.error('Non-200 HTTP status:', request.status);
-  return `Error: ${request.responseText}`;
 };
 
 export default FluidTemplate;
