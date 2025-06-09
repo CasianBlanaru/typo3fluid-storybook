@@ -3,22 +3,34 @@
  */
 
 import { jest, describe, beforeAll, afterAll, beforeEach, afterEach, test, expect } from '@jest/globals';
-import { FluidTemplate } from '../src/js/Typo3FluidToStorybook/template.js';
+
+// Remove direct import of FluidTemplate here, it will be dynamically imported in beforeEach
 
 describe('FluidTemplate', () => {
+  let FluidTemplate; // Will be assigned in beforeEach
   let mockXHR;
   let originalApiUrl;
   const defaultApiUrl = 'https://fake-api.com/api/render';
+  let originalProcessEnv;
+
 
   beforeAll(() => {
     originalApiUrl = process.env.TYPO3FLUID_STORYBOOK_API_URL;
+    // Store original process.env to avoid pollution across test files
+    originalProcessEnv = { ...process.env };
   });
 
   afterAll(() => {
     process.env.TYPO3FLUID_STORYBOOK_API_URL = originalApiUrl;
+    // Restore original process.env
+    process.env = originalProcessEnv;
   });
 
-  beforeEach(() => {
+  beforeEach(async () => { // Made async for dynamic import
+    jest.resetModules(); // Reset modules to clear cache and module state for FluidTemplate
+    const module = await import('../src/js/Typo3FluidToStorybook/template.js');
+    FluidTemplate = module.FluidTemplate;
+
     // Set a default API URL for most tests
     process.env.TYPO3FLUID_STORYBOOK_API_URL = defaultApiUrl;
 
@@ -27,9 +39,10 @@ describe('FluidTemplate', () => {
       send: jest.fn(),
       setRequestHeader: jest.fn(),
       status: 200,
-      responseText: JSON.stringify({ html: '<div>Default HTML</div>' }),
+      responseText: JSON.stringify({ html: '<div>Default HTML</div>' }), // Default success response
     };
     // Spy on window.XMLHttpRequest and return our mock
+    // This needs to be done after resetModules potentially clears JSDOM's window or spies
     jest.spyOn(window, 'XMLHttpRequest').mockImplementation(() => mockXHR);
   });
 
@@ -185,4 +198,133 @@ describe('FluidTemplate', () => {
     expect(result).toBe('Error: An unexpected error occurred while trying to fetch the Fluid template. Network send failure');
   });
 
+});
+
+
+// --- New Top-Level Describe Block for Caching Tests ---
+describe('FluidTemplate Caching', () => {
+  let CachingFluidTemplate; // Renamed to avoid potential confusion if logs were ever merged
+  let cacheMockXHR;
+  let originalApiUrl_cacheTest; // Separate env var management
+  const defaultApiUrl_cacheTest = 'https://cache-test-api.com/render';
+  let originalProcessEnv_cacheTest;
+
+  beforeAll(() => {
+    originalApiUrl_cacheTest = process.env.TYPO3FLUID_STORYBOOK_API_URL;
+    originalProcessEnv_cacheTest = { ...process.env };
+  });
+
+  afterAll(() => {
+    process.env.TYPO3FLUID_STORYBOOK_API_URL = originalApiUrl_cacheTest;
+    process.env = originalProcessEnv_cacheTest;
+  });
+
+  beforeEach(async () => {
+    jest.resetModules(); // Crucial for resetting module-level cache
+    const module = await import('../src/js/Typo3FluidToStorybook/template.js');
+    CachingFluidTemplate = module.FluidTemplate;
+
+    process.env.TYPO3FLUID_STORYBOOK_API_URL = defaultApiUrl_cacheTest;
+
+    cacheMockXHR = {
+      open: jest.fn(),
+      send: jest.fn(),
+      setRequestHeader: jest.fn(),
+      status: 200,
+      // Default response for this suite, tests can override as needed
+      responseText: JSON.stringify({ html: '<div>Cached HTML for Caching Suite</div>' }),
+    };
+    jest.spyOn(window, 'XMLHttpRequest').mockImplementation(() => cacheMockXHR);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks(); // Clean up spies
+    delete process.env.TYPO3FLUID_STORYBOOK_API_URL; // Clean up env var for next test
+  });
+
+  test('serves from cache on second identical call', () => {
+    const params = { templatePath: 'EXT:myext/Cached.html', variables: { data: 'test' } };
+
+    const result1 = CachingFluidTemplate(params);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1);
+    expect(result1).toBe('<div>Cached HTML for Caching Suite</div>');
+
+    const result2 = CachingFluidTemplate(params);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1); // Should not be called again
+    expect(result2).toBe('<div>Cached HTML for Caching Suite</div>');
+  });
+
+  test('fetches new data if parameters change', () => {
+    const params1 = { templatePath: 'EXT:myext/First.html', variables: { v: 1 } };
+    const params2 = { templatePath: 'EXT:myext/Second.html', variables: { v: 2 } };
+
+    CachingFluidTemplate(params1);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1);
+
+    cacheMockXHR.responseText = JSON.stringify({ html: '<div>New HTML</div>' });
+    const result2 = CachingFluidTemplate(params2);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(2);
+    expect(result2).toBe('<div>New HTML</div>');
+  });
+
+  test('does not cache API error responses (status 500)', () => {
+    const params = { templatePath: 'EXT:myext/ErrorTest.html' };
+    cacheMockXHR.status = 500;
+    cacheMockXHR.responseText = 'Server Error';
+
+    const errorResult = CachingFluidTemplate(params);
+    expect(errorResult).toBe(`Error: API request failed. Status: 500. Response: Server Error`);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1);
+
+    cacheMockXHR.status = 200;
+    cacheMockXHR.responseText = JSON.stringify({ html: '<div>Success after error</div>' });
+
+    const successResult = CachingFluidTemplate(params);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(2);
+    expect(successResult).toBe('<div>Success after error</div>');
+  });
+
+  test('does not cache API error responses (JSON error field)', () => {
+    const params = { templatePath: 'EXT:myext/JsonError.html' };
+    cacheMockXHR.status = 200;
+    cacheMockXHR.responseText = JSON.stringify({ error: 'API error message' });
+
+    const errorResult = CachingFluidTemplate(params);
+    expect(errorResult).toBe('Error from TYPO3 API: API error message');
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1);
+
+    cacheMockXHR.responseText = JSON.stringify({ html: '<div>Success after JSON error</div>' });
+
+    const successResult = CachingFluidTemplate(params);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(2);
+    expect(successResult).toBe('<div>Success after JSON error</div>');
+  });
+
+  test('does not cache if API URL is not defined', () => {
+    delete process.env.TYPO3FLUID_STORYBOOK_API_URL;
+    const params = { templatePath: 'EXT:myext/NoApiUrl.html' };
+
+    const errorResult = CachingFluidTemplate(params);
+    expect(errorResult).toBe('Error: TYPO3FLUID_STORYBOOK_API_URL is not defined. Please set it in your .env file.');
+    expect(cacheMockXHR.send).not.toHaveBeenCalled();
+
+    process.env.TYPO3FLUID_STORYBOOK_API_URL = defaultApiUrl_cacheTest;
+    cacheMockXHR.responseText = JSON.stringify({ html: '<div>Success after no API URL</div>' });
+
+    const successResult = CachingFluidTemplate(params);
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(1);
+    expect(successResult).toBe('<div>Success after no API URL</div>');
+  });
+
+  test('cache keys differentiate based on all parameters', () => {
+    const baseParams = { templatePath: 'EXT:myext/Diff.html', variables: { v: 1 }, section: 's1', layout: 'l1' };
+
+    CachingFluidTemplate(baseParams);
+    CachingFluidTemplate({ ...baseParams, templatePath: 'EXT:myext/Diff2.html' });
+    CachingFluidTemplate({ ...baseParams, variables: { v: 2 } });
+    CachingFluidTemplate({ ...baseParams, section: 's2' });
+    CachingFluidTemplate({ ...baseParams, layout: 'l2' });
+
+    expect(cacheMockXHR.send).toHaveBeenCalledTimes(5);
+  });
 });

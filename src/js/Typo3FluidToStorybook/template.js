@@ -8,12 +8,22 @@
  * @param {Object} [options.variables={}] - The variables to pass to the template.
  * @returns {string} The rendered HTML or an error message.
  */
+
+const fluidTemplateCache = new Map();
+
 export const FluidTemplate = ({
   templatePath = '',
   section = '',
   layout = '',
   variables = {},
 }) => {
+  const cacheKeyParams = { templatePath, variables, section, layout };
+  const cacheKey = JSON.stringify(cacheKeyParams);
+
+  if (fluidTemplateCache.has(cacheKey)) {
+    return fluidTemplateCache.get(cacheKey);
+  }
+
   const apiUrl = process.env.TYPO3FLUID_STORYBOOK_API_URL ?? '';
   if (!apiUrl) {
     return 'Error: TYPO3FLUID_STORYBOOK_API_URL is not defined. Please set it in your .env file.';
@@ -101,7 +111,12 @@ export const FluidTemplate = ({
       // Ensure parsedHtml.body exists before trying to access innerHTML
       const formattedHtml = parsedHtml.body ? parsedHtml.body.innerHTML : html;
 
-      return formattedHtml; // Return the potentially modified HTML
+      // Cache the successful result before returning
+      // Ensure we actually got HTML and there wasn't an API-level error reported in the JSON
+      if (response.html !== undefined && !response.error) {
+        fluidTemplateCache.set(cacheKey, formattedHtml);
+      }
+      return formattedHtml;
     } else if (request.status === 0) {
       return `Error: Could not connect to API. Check network, CORS settings, and TYPO3FLUID_STORYBOOK_API_URL (${apiUrl}). (Status 0)`;
     } else {

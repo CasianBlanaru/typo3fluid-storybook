@@ -94,6 +94,17 @@ Here's a conceptual example of what this API endpoint should do:
 
 This section details the `FluidTemplate` function, which is the core utility for rendering TYPO3 Fluid templates in Storybook.
 
+To improve performance and reduce redundant API calls, `FluidTemplate` implements an in-memory caching mechanism.
+
+**Caching Behavior:**
+
+*   **Scope:** Rendered HTML output from successful API calls is cached for the duration of the browser session (i.e., as long as the Storybook JavaScript environment is not reloaded).
+*   **Cache Key:** The cache key is generated based on a combination of all input parameters: `templatePath`, `variables` (deeply stringified), `section`, and `layout`. Any change to these parameters will result in a new API request rather than serving from the cache.
+*   **Functionality:**
+    *   Successful template renders are cached.
+    *   If an API call results in an error (e.g., network error, non-200 status, or an error message within the API's JSON response), the error response is **not** cached. Subsequent identical requests will re-attempt to fetch from the API.
+*   **Controls:** Currently, the cache operates automatically. There are no manual controls for clearing, disabling, or configuring the cache.
+
 ### Function Signature
 
 The function is typically imported into your story files and called with an options object:
@@ -429,7 +440,10 @@ This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/Complex
       <p>No items to display.</p>
   </f:if>
 </div>
-``
+```
+This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
+```
+
 ---
 
 ## Benefits
