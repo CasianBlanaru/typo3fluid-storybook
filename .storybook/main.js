@@ -5,6 +5,7 @@ const config = {
     "@storybook/addon-essentials",
     "@chromatic-com/storybook",
     "@storybook/addon-interactions",
+    "@storybook/addon-a11y",
   ],
   framework: {
     name: "@storybook/html-vite",
