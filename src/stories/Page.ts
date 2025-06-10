@@ -1,40 +1,50 @@
-import { createHeader } from './Header';
+import { createHeader, type User } from './Header'; // Import User type
 import './page.css';
 
-export const createPage = () => {
+export const createPage = (): HTMLElement => {
   const article = document.createElement('article');
-  let user = null;
-  let header = null;
+  let user: User | null = null; // Explicitly type user, can be User or null
 
+  // Function to create the header element, ensures it's always fresh
+  const createHeaderElement = (): HTMLElement => {
+    return createHeader({
+      user, // Pass the current user state
+      onLogin: () => {
+        user = { name: 'Jane Doe' };
+        rerenderHeader();
+      },
+      onLogout: () => {
+        user = null;
+        rerenderHeader();
+      },
+      onCreateAccount: () => {
+        user = { name: 'Jane Doe' }; // Or a different new account state
+        rerenderHeader();
+      },
+    });
+  };
+
+  // Function to re-render the header
+  // It replaces the existing header in the article element
   const rerenderHeader = () => {
-    const wrapper = document.getElementsByTagName('article')[0];
-    wrapper.replaceChild(createHeaderElement(), wrapper.firstChild);
+    const oldHeader = article.querySelector('header');
+    const newHeader = createHeaderElement();
+    if (oldHeader) {
+      article.replaceChild(newHeader, oldHeader);
+    } else {
+      // If no header exists yet (e.g., initial render), prepend it
+      article.prepend(newHeader);
+    }
   };
 
-  const onLogin = () => {
-    user = { name: 'Jane Doe' };
-    rerenderHeader();
-  };
 
-  const onLogout = () => {
-    user = null;
-    rerenderHeader();
-  };
+  // Initial header creation and appending
+  const headerElement = createHeaderElement();
+  article.appendChild(headerElement); // Append the first header
 
-  const onCreateAccount = () => {
-    user = { name: 'Jane Doe' };
-    rerenderHeader();
-  };
-
-  const createHeaderElement = () => {
-    return createHeader({ onLogin, onLogout, onCreateAccount, user });
-  };
-
-  header = createHeaderElement();
-  article.appendChild(header);
-
-  const section = `
-  <section class="storybook-page">
+  const section = document.createElement('section');
+  section.className = 'storybook-page';
+  section.innerHTML = `
     <h2>Pages in Storybook</h2>
     <p>
       We recommend building UIs with a
@@ -85,10 +95,9 @@ export const createPage = () => {
       </svg>
       Viewports addon in the toolbar
     </div>
-  </section>
-`;
+  `;
 
-  article.insertAdjacentHTML('beforeend', section);
+  article.appendChild(section);
 
   return article;
 };

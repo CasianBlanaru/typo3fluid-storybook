@@ -1,5 +1,7 @@
-/** @type { import('@storybook/html-vite').StorybookConfig } */
-const config = {
+// .storybook/main.ts
+import type { StorybookConfig } from '@storybook/html-vite';
+
+const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
   addons: [
     "@storybook/addon-essentials",
@@ -11,5 +13,9 @@ const config = {
     name: "@storybook/html-vite",
     options: {},
   },
+  // Optional: Add TypeScript specific settings for Storybook if needed
+  // typescript: {
+  //   check: true,
+  // }
 };
 export default config;

@@ -4,15 +4,18 @@
 Render TYPO3 Fluid templates inside Storybook.
 
 This package provides a way to integrate TYPO3 Fluid templates into Storybook, enabling frontend developers to work seamlessly with TYPO3 Fluid components in a modern development environment.
+The core logic is now written in **TypeScript** for improved maintainability and type safety.
 
 ---
 
 ## Features
 
-- Render TYPO3 Fluid templates directly in Storybook.
+- Render TYPO3 Fluid templates directly in Storybook (core function now in TypeScript).
 - Support for TYPO3 v12.
 - Simplified integration for TYPO3-driven projects.
 - Build modern, component-based frontend designs while staying connected to TYPO3.
+- In-memory caching for `FluidTemplate` function to boost performance on repeated renders.
+- Automated discovery script for Fluid templates within your TYPO3 extensions.
 
 **Note:** This integration primarily targets **TYPO3 v12**. While it might work with other versions, v12 is the officially supported and tested version.
 
@@ -65,11 +68,24 @@ Here's a conceptual example of what this API endpoint should do:
 
 ### Storybook Integration Steps
 
-1.  **Install the package/Include the FluidTemplate Utility:**
+1.  **Using the `FluidTemplate` Utility:**
 
-    Currently, this project is set up as an addon/utility. To use the `FluidTemplate.js` renderer:
+    The primary utility is the `FluidTemplate` function. This project is built as a library. After building the project (`npm run build`), you can use the output from the `dist` folder.
+    The `package.json` is configured with `main` and `module` fields, so if you install this package from npm (once published) or link it locally, you should be able to import it like:
 
-    *   Copy the `src/js/Typo3FluidToStorybook/template.js` file into your Storybook project. A common location is `.storybook/typo3FluidTemplates.js`.
+    ```typescript
+    import FluidTemplate from 'typo3fluid2storybook-addon'; // Or your package name
+    ```
+
+    For local development or if you prefer to copy the utility:
+    *   The source file is now `src/ts/Typo3FluidToStorybook/template.ts`.
+    *   After running `npm run build`, the compiled, usable JavaScript versions are in `dist/main.es.js` and `dist/main.umd.js`.
+    *   You could copy one of these (e.g., `dist/main.es.js`) into your Storybook setup, for example, to `.storybook/typo3FluidTemplates.js`, and then import it:
+        ```typescript
+        // Assuming you copied dist/main.es.js to .storybook/typo3FluidTemplates.js
+        import FluidTemplate from './typo3FluidTemplates.js';
+        ```
+    It's generally recommended to consume the package through standard package management practices.
 
 2.  **Configure Environment Variable:**
 
@@ -204,10 +220,14 @@ This example demonstrates how to integrate a TYPO3 Fluid template (`PersonsListT
 
 ### Fluid Template Import
 
-The Fluid renderer is imported using the `FluidTemplate` function (assuming you've copied `template.js` to `.storybook/typo3FluidTemplates.js` as suggested in the setup):
+Assuming you are using the `FluidTemplate` function, either by importing it from the package or by copying the built file (e.g., to `.storybook/typo3FluidTemplates.js`):
 
-```javascript
-import FluidTemplate from '.storybook/typo3FluidTemplates';
+```typescript
+// If installed as a package (recommended)
+import FluidTemplate from 'typo3fluid2storybook-addon';
+
+// OR if you copied the built file, e.g., dist/main.es.js to .storybook/typo3FluidTemplates.js
+// import FluidTemplate from '.storybook/typo3FluidTemplates.js';
 ```
 
 ### Define the Fluid Template Path
@@ -220,10 +240,22 @@ const PersonsListTeaserFluidpath = 'EXT:your_ext/Resources/Private/Partials/List
 
 ### Default Arguments
 
-Define default values for the template variables:
+Define default values for the template variables. With TypeScript, you can define an interface for your component's arguments.
 
-```javascript
-const defaultArgs = {
+```typescript
+interface PersonTeaserArgs {
+  fullName: string;
+  image: string;
+  detailPage: string;
+  position: string;
+  work: string;
+  officeHours: string;
+  telephone: string;
+  room: string;
+  email: string;
+}
+
+const defaultArgs: PersonTeaserArgs = {
     fullName: 'Max Mustermann',
     image: 'https://placehold.co/400x400/cc006e/white',
     detailPage: '/detail-page',
@@ -238,42 +270,56 @@ const defaultArgs = {
 
 ### Storybook Configuration
 
-The `PersonsListTeaserFluid` story is exported for use in Storybook:
+The story configuration remains similar, but you can leverage types.
 
-```javascript
-export default {
+```typescript
+// Assuming this is in a .stories.ts file
+import type { Meta, StoryObj } from '@storybook/html';
+// import FluidTemplate from 'typo3fluid2storybook-addon'; // or your import path
+
+// Define your arg types using the interface
+const meta: Meta<PersonTeaserArgs> = {
     title: 'Molecules/PersonsListTeaserFluid',
     parameters: {
         layout: 'centered',
     },
     argTypes: {
-        fullName: { control: 'text', defaultValue: defaultArgs.fullName },
-        image: { control: 'text', defaultValue: defaultArgs.image },
-        detailPage: { control: 'text', defaultValue: defaultArgs.detailPage },
-        position: { control: 'text', defaultValue: defaultArgs.position },
-        work: { control: 'text', defaultValue: defaultArgs.work },
-        officeHours: { control: 'text', defaultValue: defaultArgs.officeHours },
-        telephone: { control: 'text', defaultValue: defaultArgs.telephone },
-        room: { control: 'text', defaultValue: defaultArgs.room },
-        email: { control: 'text', defaultValue: defaultArgs.email },
+        fullName: { control: 'text' }, // defaultValue can be omitted if set in meta.args or story.args
+        image: { control: 'text' },
+        detailPage: { control: 'text' },
+        position: { control: 'text' },
+        work: { control: 'text' },
+        officeHours: { control: 'text' },
+        telephone: { control: 'text' },
+        room: { control: 'text' },
+        email: { control: 'text' },
     },
+    args: defaultArgs, // Set default args for all stories from this meta
 };
+export default meta;
+
+type Story = StoryObj<PersonTeaserArgs>;
 ```
 
 ### Define the Template
 
-Create a template function that renders the Fluid template:
+Create a template function that renders the Fluid template.
 
-```javascript
-const Template = (args) => {
-    const html = FluidTemplate({
+```typescript
+const PersonsListTeaserFluidpath = 'EXT:your_ext/Resources/Private/Partials/List/Item.html';
+
+const TemplateFunction = (args: PersonTeaserArgs) => {
+    // Assume FluidTemplate is imported
+    // const FluidTemplate = window.FluidTemplate; // Example if loaded globally, adjust import as needed
+
+    const html = FluidTemplate({ // FluidTemplate is the function from this package
         templatePath: PersonsListTeaserFluidpath,
         variables: {
-            person: {
+            person: { // Assuming your Fluid template expects a 'person' object
                 fullName: args.fullName,
                 image: args.image,
                 detailPage: args.detailPage,
-                position: { title: args.position },
+                position: { title: args.position }, // Example of nesting if needed
                 work: args.work,
                 officeHours: args.officeHours,
                 telephone: args.telephone,
@@ -283,110 +329,131 @@ const Template = (args) => {
         },
     });
 
-    return `<div>${html}</div>`;
+    // Storybook expects a string or a DOM element
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    return container; // Or just return html string: return `<div>${html}</div>`;
 };
 ```
 
 ### Export the Story
 
-The story is exported and connected to the default arguments:
+Export stories using the typed `StoryObj`.
 
-```javascript
-export const PersonsListTeaserFluid = Template.bind({});
-PersonsListTeaserFluid.args = {
-    ...defaultArgs,
+```typescript
+export const PersonsListTeaserFluid: Story = {
+  render: TemplateFunction,
+  // args can be set here to override meta.args or provide specific values
+  // args: {
+  //   ...defaultArgs,
+  //   fullName: "Erika Mustermann",
+  // }
 };
+```
 
 ### Using Complex `argTypes` (Objects and Arrays)
 
 Storybook's `argTypes` allow for detailed configuration of controls, including those for complex data types like objects and arrays. These can be effectively used with `FluidTemplate` to pass structured data to your Fluid components.
 
-When working with JavaScript (as opposed to TypeScript), you might need to explicitly set the `control` type in `argTypes` to `'object'` or `'array'` for Storybook to render the appropriate UI control. Otherwise, it might default to a simple text input for complex types.
+Below is an example demonstrating how to configure `argTypes` for object and array inputs and pass them to `FluidTemplate`, now using TypeScript.
 
-Below is an example demonstrating how to configure `argTypes` for object and array inputs and pass them to `FluidTemplate`.
+**Example Storybook Story (TypeScript):**
 
-**Example Storybook Story:**
+```typescript
+// In your .stories.ts file
+import type { Meta, StoryObj } from '@storybook/html';
+// import FluidTemplate from 'typo3fluid2storybook-addon'; // Or your import path
 
-```javascript
-// In your .stories.js file
+interface UserData {
+  name: string;
+  roles: string[];
+  id: number;
+  isActive: boolean;
+  address: { street: string; city: string };
+}
 
-import FluidTemplate from '.storybook/typo3FluidTemplates'; // Adjust path if needed
+interface Item {
+  title: string;
+  value: string;
+  data: { count: number; priority?: string };
+}
 
-export default {
+interface ComplexComponentArgs {
+  templatePath: string;
+  userData: UserData;
+  items: Item[];
+  pageTitle: string;
+}
+
+const metaComplex: Meta<ComplexComponentArgs> = {
   title: 'Components/ComplexFluidComponent',
-  // component: FluidTemplate, // Optional: You can set the component for better integration if needed
   parameters: {
-    layout: 'padded', // Or 'centered', 'fullscreen'
+    layout: 'padded',
   },
   argTypes: {
     templatePath: {
       control: 'text',
-      defaultValue: 'EXT:my_ext/Resources/Private/Templates/ComplexComponent.html',
     },
     userData: {
-      control: 'object', // Explicitly set control type for objects
-      defaultValue: {
-        name: 'Jane Doe',
-        roles: ['Editor', 'Reviewer'],
-        id: 123,
-        isActive: true,
-        address: { street: '123 Main St', city: 'Storybook City' }
-      },
+      control: 'object',
     },
     items: {
-      control: 'array',  // Explicitly set control type for arrays
-      defaultValue: [
-        { title: 'First Item', value: 'val1', data: { count: 10 } },
-        { title: 'Second Item', value: 'val2', data: { count: 25 } },
-        { title: 'Third Item', value: 'val3', data: { count: 5 } },
-      ],
+      control: 'array',
     },
-    // Example of a simple text argType, which might also be a variable for Fluid
     pageTitle: {
         control: 'text',
-        defaultValue: 'My Complex Component View'
     }
   },
+  args: { // Default values for the args
+    templatePath: 'EXT:my_ext/Resources/Private/Templates/ComplexComponent.html',
+    userData: {
+      name: 'Jane Doe',
+      roles: ['Editor', 'Reviewer'],
+      id: 123,
+      isActive: true,
+      address: { street: '123 Main St', city: 'Storybook City' }
+    },
+    items: [
+      { title: 'First Item', value: 'val1', data: { count: 10 } },
+      { title: 'Second Item', value: 'val2', data: { count: 25 } },
+      { title: 'Third Item', value: 'val3', data: { count: 5 } },
+    ],
+    pageTitle: 'My Complex Component View'
+  }
 };
+export default metaComplex;
 
-const Template = (args) => {
-  // Destructure args to separate template-specific variables from others
+type ComplexStory = StoryObj<ComplexComponentArgs>;
+
+const ComplexTemplate: ComplexStory['render'] = (args: ComplexComponentArgs) => {
   const { templatePath, userData, items, pageTitle, ...otherStorybookArgs } = args;
 
-  // This log helps you see any other args passed by Storybook in the browser console
-  console.log("Other Storybook Args not passed to Fluid:", otherStorybookArgs);
+  // console.log("Other Storybook Args not passed to Fluid:", otherStorybookArgs);
 
   const fluidVariables = {
-    user: userData,    // Pass the object to the template variable 'user'
-    itemList: items,   // Pass the array to the template variable 'itemList'
-    title: pageTitle,  // Pass the simple string to 'title'
-    // You could also define some fixed/static variables here if needed:
-    // staticSetting: 'enabled',
-    // featureFlags: { newLayout: true }
+    user: userData,
+    itemList: items,
+    title: pageTitle,
   };
 
-  const htmlOutput = FluidTemplate({
+  const htmlOutput = FluidTemplate({ // FluidTemplate is the function from this package
     templatePath: templatePath,
     variables: fluidVariables,
   });
 
-  // It's good practice to wrap the raw HTML output, especially if it might not have a single root element
-  return `<div class="story-wrapper">${htmlOutput}</div>`;
+  const container = document.createElement('div');
+  container.className = 'story-wrapper';
+  container.innerHTML = htmlOutput;
+  return container; // Or return htmlOutput string directly
 };
 
-export const Default = Template.bind({});
-// Default.args will be automatically populated from argTypes.defaultValue.
-// You can override specific args here for a particular story variation if needed:
-// Default.args = {
-//   ...Default.args, // This line is not strictly needed as Storybook does this
-//   userData: { name: 'John Doe', roles: ['Admin'], id: 1, isActive: false, address: { street: '456 Another St', city: 'Testville'} },
-//   items: [{ title: 'Special Item', value: 'special', data: { count: 100 } }]
-// };
+export const Default: ComplexStory = {
+  render: ComplexTemplate,
+};
 
-// Example of a story with a specific variation
-export const AdminUser = Template.bind({});
-AdminUser.args = {
-    // templatePath is inherited from argTypes.defaultValue if not specified
+export const AdminUser: ComplexStory = {
+  render: ComplexTemplate,
+  args: {
     userData: {
         name: 'Admin User',
         roles: ['Administrator', 'SuperUser'],
@@ -399,6 +466,7 @@ AdminUser.args = {
         { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
     ],
     pageTitle: "Admin View - Complex Component"
+  },
 };
 ```
 
@@ -526,62 +594,80 @@ The script generates a JSON file containing an object.
 
 Once you have generated the `fluid-templates.json` file (or your custom named output file), you can import it into your Storybook stories to create a dynamic template selector. This allows you to easily switch between different Fluid templates using Storybook's Controls addon.
 
-**Example Storybook Story (`.stories.js`):**
+**Example Storybook Story (`.stories.ts`):**
 
-```javascript
-// Example: src/stories/FluidTemplateViewer.stories.js
+```typescript
+// Example: src/stories/FluidTemplateViewer.stories.ts
+import type { Meta, StoryObj } from '@storybook/html';
 
-// Adjust the path to where you copied FluidTemplate.js
-import FluidTemplate from '../../.storybook/typo3FluidTemplates';
+// Adjust the path to where you copied FluidTemplate.js or from package
+// import FluidTemplate from 'typo3fluid2storybook-addon';
+import FluidTemplate from '../../.storybook/typo3FluidTemplates'; // Example if copied
+
 // Adjust the path to your generated JSON file
 import templatePathsByName from '../../.storybook/fluid-templates.json';
 
-export default {
+interface Author {
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface ViewerArgs {
+  selectedTemplate: string; // This will hold the EXT:path after mapping
+  headline?: string;
+  text?: string;
+  author?: Author;
+  // Add other common variables your templates might use
+}
+
+const metaViewer: Meta<ViewerArgs> = {
   title: 'TYPO3 Fluid Viewer',
   parameters: {
-    layout: 'padded', // Or 'centered', 'fullscreen'
+    layout: 'padded',
   },
   argTypes: {
     selectedTemplate: {
       name: 'Select Fluid Template',
       description: 'Choose a Fluid template to render. The paths are sourced from the generated JSON file.',
       control: 'select',
-      options: Object.keys(templatePathsByName), // Display aliases in the dropdown
-      mapping: templatePathsByName, // Map the selected alias to its full EXT:path string
+      options: Object.keys(templatePathsByName),
+      mapping: templatePathsByName,
     },
-    // --- Example Fluid Variables ---
-    // Add argTypes for variables that your Fluid templates might commonly use.
-    // These will appear as controls in Storybook.
     headline: {
       name: 'Headline Text',
       control: 'text',
-      defaultValue: 'Welcome to Fluid in Storybook!',
       description: 'A headline variable often used in templates.',
     },
     text: {
       name: 'Body Text',
-      control: 'text', // 'text' for long text, or 'string' for short
-      defaultValue: 'This is some sample text passed as a variable to the Fluid template.',
+      control: 'text',
     },
-    // Example of an object variable for more complex data
     author: {
       name: 'Author Data (Object)',
       control: 'object',
-      defaultValue: {
-        name: 'Max Mustermann',
-        email: 'max.mustermann@example.com',
-        role: 'Content Editor'
-      }
     }
   },
+  args: { // Default values for this meta
+    headline: 'Welcome to Fluid in Storybook!',
+    text: 'This is some sample text passed as a variable to the Fluid template.',
+    author: {
+      name: 'Max Mustermann',
+      email: 'max.mustermann@example.com',
+      role: 'Content Editor'
+    }
+  }
 };
+export default metaViewer;
 
-const Template = (args) => {
-  // Destructure args: selectedTemplate is the full EXT:path due to 'mapping'
-  // Other args are collected into 'fluidVariables' to be passed to the template
+type ViewerStory = StoryObj<ViewerArgs>;
+
+const ViewerTemplate: ViewerStory['render'] = (args: ViewerArgs) => {
   const { selectedTemplate, ...fluidVariables } = args;
 
   if (!selectedTemplate || Object.keys(templatePathsByName).length === 0) {
+    // Handle no selection or empty template map
+    // (Same as previous JavaScript example)
     if (Object.keys(templatePathsByName).length === 0) {
       return `
         <div style="padding: 20px; border: 1px dashed #ccc; background-color: #f9f9f9;">
@@ -597,39 +683,32 @@ const Template = (args) => {
     `;
   }
 
-  // Call FluidTemplate with the chosen template path and the rest of the args as variables
-  const htmlOutput = FluidTemplate({
+  const htmlOutput = FluidTemplate({ // FluidTemplate is the function from this package
     templatePath: selectedTemplate,
     variables: fluidVariables,
   });
 
-  return `<div class="fluid-story-render">${htmlOutput}</div>`;
+  const container = document.createElement('div');
+  container.className = 'fluid-story-render';
+  container.innerHTML = htmlOutput;
+  return container; // Or return htmlOutput string directly
 };
 
-export const Viewer = Template.bind({});
-
-// Determine the first available template alias for default selection
-const availableTemplateAliases = Object.keys(templatePathsByName);
-const defaultTemplateAlias = availableTemplateAliases.length > 0 ? availableTemplateAliases[0] : undefined;
-
-Viewer.args = {
-  // Set the default selected template using its alias.
-  // Storybook will use the 'mapping' to pass the actual EXT:path to the Template function.
-  selectedTemplate: defaultTemplateAlias,
-  // Default values for other variables are taken from argTypes.defaultValue
-  // but can be overridden here if needed for this specific story.
-  // headline: "Custom Headline for this Story",
+export const Viewer: ViewerStory = {
+  render: ViewerTemplate,
+  args: {
+    selectedTemplate: Object.keys(templatePathsByName).length > 0
+                      ? Object.keys(templatePathsByName)[0] // Default to first alias
+                      : undefined,
+    // Other args will use defaults from metaViewer.args
+  },
+  parameters: {
+    notes: Object.keys(templatePathsByName).length > 0
+           ? `This story uses a dynamic list of Fluid templates from \`fluid-templates.json\`.
+              If you add or remove templates, re-run the discovery script.`
+           : 'No templates found. Run discovery script.'
+  }
 };
-
-// Add a note about keeping the JSON file updated
-if (Object.keys(templatePathsByName).length > 0) {
-    Viewer.parameters = {
-        ...Viewer.parameters,
-        notes: `This story uses a dynamic list of Fluid templates from \`fluid-templates.json\`.
-                If you add or remove templates in your TYPO3 extensions, remember to re-run
-                the \`scripts/discover-fluid-templates.js\` script to update the list.`,
-    };
-}
 ```
 
 **Explanation:**
