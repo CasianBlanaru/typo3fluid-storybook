@@ -231,12 +231,6 @@ This example demonstrates how to integrate a TYPO3 Fluid template (`PersonsListT
 
 Assuming you are using the `FluidTemplate` function, either by importing it from the package or by copying the built file (e.g., to `.storybook/typo3FluidTemplates.js`):
 
-```typescript
-// If installed as a package (recommended)
-import FluidTemplate from 'typo3fluid2storybook-addon';
-
-// OR if you copied the built file, e.g., dist/main.es.js to .storybook/typo3FluidTemplates.js
-// import FluidTemplate from '.storybook/typo3FluidTemplates.js';
 ```
 
 ### Define the Fluid Template Path
@@ -249,22 +243,6 @@ const PersonsListTeaserFluidpath = 'EXT:your_ext/Resources/Private/Partials/List
 
 ### Default Arguments
 
-Define default values for the template variables. With TypeScript, you can define an interface for your component's arguments.
-
-```typescript
-interface PersonTeaserArgs {
-  fullName: string;
-  image: string;
-  detailPage: string;
-  position: string;
-  work: string;
-  officeHours: string;
-  telephone: string;
-  room: string;
-  email: string;
-}
-
-const defaultArgs: PersonTeaserArgs = {
     fullName: 'Max Mustermann',
     image: 'https://placehold.co/400x400/cc006e/white',
     detailPage: '/detail-page',
@@ -358,6 +336,66 @@ export const PersonsListTeaserFluid: Story = {
   //   fullName: "Erika Mustermann",
   // }
 };
+
+export const AdminUser: ComplexStory = {
+  render: ComplexTemplate,
+  args: {
+    userData: {
+        name: 'Admin User',
+        roles: ['Administrator', 'SuperUser'],
+        id: 789,
+        isActive: true,
+        address: { street: '1 Admin Road', city: 'Control Panel' }
+    },
+    items: [
+        { title: 'Admin Task 1', value: 'task_a', data: { priority: 'high' } },
+        { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
+    ],
+    pageTitle: "Admin View - Complex Component"
+  },
+};
+```
+
+**Conceptual Fluid Template Snippet:**
+
+This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/ComplexComponent.html` might consume the variables passed above.
+
+```html
+<!-- EXT:my_ext/Resources/Private/Templates/ComplexComponent.html (Conceptual) -->
+<h2>{title}</h2>
+
+<div class="user-profile" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+  <h3>User: {user.name} (ID: {user.id})</h3>
+  <p>Status: <f:if condition="{user.isActive}">Active</f:if><f:else>Inactive</f:else></p>
+  <p>Address: {user.address.street}, {user.address.city}</p>
+  <p>Roles:</p>
+  <ul>
+    <f:for each="{user.roles}" as="role">
+      <li>{role}</li>
+    </f:for>
+  </ul>
+</div>
+
+<div class="item-list" style="border: 1px solid #ccc; padding: 10px;">
+  <h4>Items ({itemList -> f:count()} items):</h4>
+  <ul>
+    <f:for each="{itemList}" as="item">
+      <li>
+        <strong>{item.title}</strong> (Value: {item.value})
+        <br />
+        <small>Data Count: {item.data.count -> f:if(condition: '{item.data.count}', else: 'N/A')}</small>
+        <f:if condition="{item.data.priority}">
+            (Priority: {item.data.priority})
+        </f:if>
+      </li>
+    </f:for>
+  </ul>
+  <f:if condition="{itemList -> f:count()} == 0">
+      <p>No items to display.</p>
+  </f:if>
+</div>
+```
+This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
 ```
 
 ### Using Complex `argTypes` (Objects and Arrays)
