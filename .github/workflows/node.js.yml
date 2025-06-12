@@ -9,6 +9,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions: # Added permissions at the workflow level
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
 
@@ -27,5 +32,17 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
-    - run: npm run build --if-present
+    - run: npm run build --if-present # This builds the library
     - run: npm test
+
+    - name: Build Storybook
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: npm run storybook:build # Outputs to storybook-static
+
+    - name: Deploy Storybook to GitHub Pages
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./storybook-static
+        # Optional: user_name, user_email, commit_message, publish_branch can be customized if needed

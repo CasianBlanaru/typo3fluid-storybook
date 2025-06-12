@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "build-storybook -o ../public/storybook",
+    "storybook:build": "storybook build -o storybook-static",
     "watch": "vite build --watch --mode development",
     "build": "vite build --mode production",
     "build-storybook": "storybook build",

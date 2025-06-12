@@ -967,6 +967,39 @@ If your TYPO3 API endpoint is correctly configured to render the above Fluid tem
 
 ---
 
+## Live Storybook Demo & Deployment
+
+This project's Storybook is automatically built and deployed to GitHub Pages, providing a live demonstration of the components and Fluid template integration.
+
+### Automated Deployment
+
+*   The Storybook instance is built and deployed via a GitHub Actions workflow defined in `.github/workflows/node.js.yml`.
+*   This deployment occurs automatically whenever changes are pushed to the `main` branch.
+
+### Accessing the Live Demo
+
+*   **View the live Storybook deployment here: [Link to GitHub Pages Site]**
+*   *(Note: Replace `[Link to GitHub Pages Site]` with the actual URL once GitHub Pages is configured and deployed. The URL format is typically `https://<username>.github.io/<repository-name>/` or a custom domain if configured.)*
+
+### First-Time Setup for GitHub Pages (for Repository Maintainers)
+
+If you are the maintainer of this repository or a fork and want to enable GitHub Pages for the first time:
+
+1.  **Wait for Initial Workflow Run:** After your first push to the `main` branch (or after configuring the workflow), the GitHub Actions workflow should attempt a deployment. This will automatically create a `gh-pages` branch (or the branch configured in the workflow) containing your built Storybook static files.
+2.  **Navigate to Repository Settings:** Go to your GitHub repository and click on the "Settings" tab.
+3.  **Go to 'Pages' Section:** In the left sidebar of the settings page, find and click on "Pages" (usually under the "Code and automation" section).
+4.  **Configure Source:**
+    *   Under "Build and deployment", for the "Source" option, select "Deploy from a branch".
+5.  **Select Branch and Folder:**
+    *   From the "Branch" dropdown that appears, choose the `gh-pages` branch (or the branch used by the `peaceiris/actions-gh-pages` action in your workflow, which defaults to `gh-pages`).
+    *   Ensure the folder is set to `/ (root)`.
+    *   Click "Save".
+6.  **Access Your Site:** GitHub will then build your Pages site from the specified branch and provide a URL (e.g., `https://<your-username>.github.io/<your-repository-name>/`). It might take a few minutes for the site to become live after saving. This is the URL you can use for the placeholder link above.
+
+Once set up, subsequent pushes to `main` will automatically update the content on GitHub Pages.
+
+---
+
 ## Contributing
 
 Contributions are welcome! Feel free to open an issue or submit a pull request.
