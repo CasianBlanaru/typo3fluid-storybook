@@ -1,7 +1,18 @@
-import { createButton } from './Button';
+import { createButton } from './Button'; // Ensure Button.ts is imported correctly
 import './header.css';
 
-export const createHeader = ({ user, onLogout, onLogin, onCreateAccount }) => {
+export interface User {
+  name: string;
+}
+
+export interface HeaderProps {
+  user?: User; // User can be optional
+  onLogout: () => void;
+  onLogin: () => void;
+  onCreateAccount: () => void;
+}
+
+export const createHeader = ({ user, onLogout, onLogin, onCreateAccount }: HeaderProps): HTMLElement => {
   const header = document.createElement('header');
 
   const wrapper = document.createElement('div');
@@ -24,14 +35,16 @@ export const createHeader = ({ user, onLogout, onLogin, onCreateAccount }) => {
 
   wrapper.insertAdjacentHTML('afterbegin', logo);
 
-  const account = document.createElement('div');
+  const accountManagement = document.createElement('div');
   if (user) {
-    const welcomeMessage = `<span class="welcome">Welcome, <b>${user.name}</b>!</span>`;
-    account.innerHTML = welcomeMessage;
-    account.appendChild(createButton({ size: 'small', label: 'Log out', onClick: onLogout }));
+    const welcomeMessage = document.createElement('span');
+    welcomeMessage.className = 'welcome';
+    welcomeMessage.innerHTML = `Welcome, <b>${user.name}</b>!`; // Use innerHTML for HTML content
+    accountManagement.appendChild(welcomeMessage);
+    accountManagement.appendChild(createButton({ size: 'small', label: 'Log out', onClick: onLogout }));
   } else {
-    account.appendChild(createButton({ size: 'small', label: 'Log in', onClick: onLogin }));
-    account.appendChild(
+    accountManagement.appendChild(createButton({ size: 'small', label: 'Log in', onClick: onLogin }));
+    accountManagement.appendChild(
       createButton({
         size: 'small',
         label: 'Sign up',
@@ -40,7 +53,7 @@ export const createHeader = ({ user, onLogout, onLogin, onCreateAccount }) => {
       })
     );
   }
-  wrapper.appendChild(account);
+  wrapper.appendChild(accountManagement);
   header.appendChild(wrapper);
 
   return header;
