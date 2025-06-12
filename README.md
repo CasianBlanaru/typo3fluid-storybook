@@ -559,6 +559,167 @@ This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/Complex
 This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
 ```
 
+### Using Complex `argTypes` (Objects and Arrays)
+
+Storybook's `argTypes` allow for detailed configuration of controls, including those for complex data types like objects and arrays. These can be effectively used with `FluidTemplate` to pass structured data to your Fluid components.
+
+Below is an example demonstrating how to configure `argTypes` for object and array inputs and pass them to `FluidTemplate`, now using TypeScript.
+
+**Example Storybook Story (TypeScript):**
+
+```typescript
+// In your .stories.ts file
+import type { Meta, StoryObj } from '@storybook/html';
+// import FluidTemplate from 'typo3fluid2storybook-addon'; // Or your import path
+
+interface UserData {
+  name: string;
+  roles: string[];
+  id: number;
+  isActive: boolean;
+  address: { street: string; city: string };
+}
+
+interface Item {
+  title: string;
+  value: string;
+  data: { count: number; priority?: string };
+}
+
+interface ComplexComponentArgs {
+  templatePath: string;
+  userData: UserData;
+  items: Item[];
+  pageTitle: string;
+}
+
+const metaComplex: Meta<ComplexComponentArgs> = {
+  title: 'Components/ComplexFluidComponent',
+  parameters: {
+    layout: 'padded',
+  },
+  argTypes: {
+    templatePath: {
+      control: 'text',
+    },
+    userData: {
+      control: 'object',
+    },
+    items: {
+      control: 'array',
+    },
+    pageTitle: {
+        control: 'text',
+    }
+  },
+  args: { // Default values for the args
+    templatePath: 'EXT:my_ext/Resources/Private/Templates/ComplexComponent.html',
+    userData: {
+      name: 'Jane Doe',
+      roles: ['Editor', 'Reviewer'],
+      id: 123,
+      isActive: true,
+      address: { street: '123 Main St', city: 'Storybook City' }
+    },
+    items: [
+      { title: 'First Item', value: 'val1', data: { count: 10 } },
+      { title: 'Second Item', value: 'val2', data: { count: 25 } },
+      { title: 'Third Item', value: 'val3', data: { count: 5 } },
+    ],
+    pageTitle: 'My Complex Component View'
+  }
+};
+export default metaComplex;
+
+type ComplexStory = StoryObj<ComplexComponentArgs>;
+
+const ComplexTemplate: ComplexStory['render'] = (args: ComplexComponentArgs) => {
+  const { templatePath, userData, items, pageTitle, ...otherStorybookArgs } = args;
+
+  // console.log("Other Storybook Args not passed to Fluid:", otherStorybookArgs);
+
+  const fluidVariables = {
+    user: userData,
+    itemList: items,
+    title: pageTitle,
+  };
+
+  const htmlOutput = FluidTemplate({ // FluidTemplate is the function from this package
+    templatePath: templatePath,
+    variables: fluidVariables,
+  });
+
+  const container = document.createElement('div');
+  container.className = 'story-wrapper';
+  container.innerHTML = htmlOutput;
+  return container; // Or return htmlOutput string directly
+};
+
+export const Default: ComplexStory = {
+  render: ComplexTemplate,
+};
+
+export const AdminUser: ComplexStory = {
+  render: ComplexTemplate,
+  args: {
+    userData: {
+        name: 'Admin User',
+        roles: ['Administrator', 'SuperUser'],
+        id: 789,
+        isActive: true,
+        address: { street: '1 Admin Road', city: 'Control Panel' }
+    },
+    items: [
+        { title: 'Admin Task 1', value: 'task_a', data: { priority: 'high' } },
+        { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
+    ],
+    pageTitle: "Admin View - Complex Component"
+  },
+};
+```
+
+**Conceptual Fluid Template Snippet:**
+
+This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/ComplexComponent.html` might consume the variables passed above.
+
+```html
+<!-- EXT:my_ext/Resources/Private/Templates/ComplexComponent.html (Conceptual) -->
+<h2>{title}</h2>
+
+<div class="user-profile" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+  <h3>User: {user.name} (ID: {user.id})</h3>
+  <p>Status: <f:if condition="{user.isActive}">Active</f:if><f:else>Inactive</f:else></p>
+  <p>Address: {user.address.street}, {user.address.city}</p>
+  <p>Roles:</p>
+  <ul>
+    <f:for each="{user.roles}" as="role">
+      <li>{role}</li>
+    </f:for>
+  </ul>
+</div>
+
+<div class="item-list" style="border: 1px solid #ccc; padding: 10px;">
+  <h4>Items ({itemList -> f:count()} items):</h4>
+  <ul>
+    <f:for each="{itemList}" as="item">
+      <li>
+        <strong>{item.title}</strong> (Value: {item.value})
+        <br />
+        <small>Data Count: {item.data.count -> f:if(condition: '{item.data.count}', else: 'N/A')}</small>
+        <f:if condition="{item.data.priority}">
+            (Priority: {item.data.priority})
+        </f:if>
+      </li>
+    </f:for>
+  </ul>
+  <f:if condition="{itemList -> f:count()} == 0">
+      <p>No items to display.</p>
+  </f:if>
+</div>
+```
+This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
+```
+
 ---
 
 ## Benefits
