@@ -17,7 +17,7 @@ The core logic is now written in **TypeScript** for improved maintainability and
 - In-memory caching for `FluidTemplate` function to boost performance on repeated renders.
 - Automated discovery script for Fluid templates within your TYPO3 extensions.
 
-**Note:** This integration primarily targets **TYPO3 v12**. While it might work with other versions, v12 is the officially supported and tested version.
+**Note:** While this integration was initially developed with TYPO3 v12 in mind, it is designed to be compatible with TYPO3 versions 10.x, 11.x, and 12.x. See the "TYPO3 Version Compatibility" section for more details.
 
 ---
 
@@ -27,12 +27,21 @@ The core logic is now written in **TypeScript** for improved maintainability and
 
 *   **Node.js:** A recent LTS version is recommended (e.g., v18.x or v20.x). The CI environment for this project uses v22.x.
 *   **Storybook:** Version `^8.5.0` or compatible (as per `package.json`).
-*   **TYPO3 CMS:** Version v12 is currently supported. The integration relies on a corresponding TYPO3 extension that provides the Fluid rendering API.
+*   **TYPO3 CMS:** Supported versions: v12.x, v11.x, v10.x. The integration relies on a corresponding TYPO3 extension that provides the Fluid rendering API.
 *   **TYPO3 Extension for Fluid Rendering:** A TYPO3 extension that exposes a `/fluid/render` (or similar) API endpoint is required. This endpoint is responsible for rendering Fluid templates and returning the HTML output.
+
+### TYPO3 Version Compatibility
+
+This integration tool is designed to work with TYPO3 versions 10.x, 11.x, and 12.x. The successful integration across these TYPO3 versions primarily depends on your ability to implement the server-side Fluid rendering API endpoint.
+
+*   **API Contract:** The core `FluidTemplate` utility (client-side) communicates with your user-defined API endpoint. This endpoint must adhere to the expected JSON contract (see "API Documentation: `FluidTemplate(options)`" for request/response details).
+*   **Server-Side Implementation:** The specific PHP classes (e.g., for `StandaloneView`) and methods for creating API endpoints (e.g., PSR-15 middleware, eID, Extbase Controller Actions) may vary between TYPO3 versions. You should consult the official TYPO3 documentation for your specific version when implementing this server-side endpoint.
+*   **Client-Side Consistency:** No specific client-side code changes in this package are typically needed for different TYPO3 versions, provided the API contract is met.
+*   **Testing:** Users are encouraged to test their specific Fluid features and ViewHelpers with their chosen TYPO3 version, as behavior in a headless/API-rendered context might occasionally differ from full frontend rendering.
 
 ### TYPO3 Setup (Fluid Rendering API)
 
-To use Fluid templates in Storybook, you need a TYPO3 extension that exposes your Fluid templates via an API endpoint. This endpoint will be called by the Storybook integration to fetch the rendered HTML.
+To use Fluid templates in Storybook, you need a TYPO3 extension that exposes your Fluid templates via an API endpoint (as detailed under "Prerequisites" and "TYPO3 Version Compatibility"). This endpoint will be called by the Storybook integration to fetch the rendered HTML. Remember to adapt your endpoint implementation based on your TYPO3 version (v10, v11, or v12) and its best practices.
 
 Here's a conceptual example of what this API endpoint should do:
 
@@ -222,12 +231,6 @@ This example demonstrates how to integrate a TYPO3 Fluid template (`PersonsListT
 
 Assuming you are using the `FluidTemplate` function, either by importing it from the package or by copying the built file (e.g., to `.storybook/typo3FluidTemplates.js`):
 
-```typescript
-// If installed as a package (recommended)
-import FluidTemplate from 'typo3fluid2storybook-addon';
-
-// OR if you copied the built file, e.g., dist/main.es.js to .storybook/typo3FluidTemplates.js
-// import FluidTemplate from '.storybook/typo3FluidTemplates.js';
 ```
 
 ### Define the Fluid Template Path
@@ -240,22 +243,6 @@ const PersonsListTeaserFluidpath = 'EXT:your_ext/Resources/Private/Partials/List
 
 ### Default Arguments
 
-Define default values for the template variables. With TypeScript, you can define an interface for your component's arguments.
-
-```typescript
-interface PersonTeaserArgs {
-  fullName: string;
-  image: string;
-  detailPage: string;
-  position: string;
-  work: string;
-  officeHours: string;
-  telephone: string;
-  room: string;
-  email: string;
-}
-
-const defaultArgs: PersonTeaserArgs = {
     fullName: 'Max Mustermann',
     image: 'https://placehold.co/400x400/cc006e/white',
     detailPage: '/detail-page',
@@ -349,6 +336,66 @@ export const PersonsListTeaserFluid: Story = {
   //   fullName: "Erika Mustermann",
   // }
 };
+
+export const AdminUser: ComplexStory = {
+  render: ComplexTemplate,
+  args: {
+    userData: {
+        name: 'Admin User',
+        roles: ['Administrator', 'SuperUser'],
+        id: 789,
+        isActive: true,
+        address: { street: '1 Admin Road', city: 'Control Panel' }
+    },
+    items: [
+        { title: 'Admin Task 1', value: 'task_a', data: { priority: 'high' } },
+        { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
+    ],
+    pageTitle: "Admin View - Complex Component"
+  },
+};
+```
+
+**Conceptual Fluid Template Snippet:**
+
+This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/ComplexComponent.html` might consume the variables passed above.
+
+```html
+<!-- EXT:my_ext/Resources/Private/Templates/ComplexComponent.html (Conceptual) -->
+<h2>{title}</h2>
+
+<div class="user-profile" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+  <h3>User: {user.name} (ID: {user.id})</h3>
+  <p>Status: <f:if condition="{user.isActive}">Active</f:if><f:else>Inactive</f:else></p>
+  <p>Address: {user.address.street}, {user.address.city}</p>
+  <p>Roles:</p>
+  <ul>
+    <f:for each="{user.roles}" as="role">
+      <li>{role}</li>
+    </f:for>
+  </ul>
+</div>
+
+<div class="item-list" style="border: 1px solid #ccc; padding: 10px;">
+  <h4>Items ({itemList -> f:count()} items):</h4>
+  <ul>
+    <f:for each="{itemList}" as="item">
+      <li>
+        <strong>{item.title}</strong> (Value: {item.value})
+        <br />
+        <small>Data Count: {item.data.count -> f:if(condition: '{item.data.count}', else: 'N/A')}</small>
+        <f:if condition="{item.data.priority}">
+            (Priority: {item.data.priority})
+        </f:if>
+      </li>
+    </f:for>
+  </ul>
+  <f:if condition="{itemList -> f:count()} == 0">
+      <p>No items to display.</p>
+  </f:if>
+</div>
+```
+This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
 ```
 
 ### Using Complex `argTypes` (Objects and Arrays)
@@ -725,6 +772,192 @@ export const Viewer: ViewerStory = {
 5.  **Keep Updated:** Remember to re-run the `discover-fluid-templates.js` script whenever you add, remove, or rename Fluid templates in your TYPO3 extensions to keep the `fluid-templates.json` file and your Storybook template selector up-to-date.
 
 This setup provides a powerful way to browse and test all your discovered Fluid templates directly within Storybook using a simple dropdown control.
+
+---
+
+## Using Dynamic Data from TYPO3 (with Storybook Loaders)
+
+To create more realistic previews, you often need to fetch dynamic data from your TYPO3 backend (or any other API) and pass it to your Fluid templates. Storybook `loaders` are asynchronous functions that fetch data before a story renders, making this possible.
+
+### Overview of Storybook Loaders
+
+*   **Asynchronous Data Fetching:** Loaders run before the story's `render` function. They can fetch data from any API.
+*   **`loaded` Data:** The data returned by loaders is passed to the `render` function via the `loaded` property in its second argument (`{ loaded }`).
+*   **Environment Variables:** It's good practice to use environment variables for API base URLs.
+
+### Environment Variable for Data API
+
+1.  Create or update your `.env` file in your Storybook project root:
+    ```env
+    STORYBOOK_TYPO3_DATA_API_BASE_URL=https://your-typo3-site.com/api/data
+    # For Vite-based Storybook, you might need to prefix with VITE_
+    # VITE_TYPO3_DATA_API_BASE_URL=https://your-typo3-site.com/api/data
+    ```
+    (Check your Storybook's environment variable handling; `STORYBOOK_` is common, but Vite projects often use `VITE_` for variables to be exposed to client-side code via `import.meta.env` or `process.env` after transformation). For this example, we'll assume `process.env.STORYBOOK_TYPO3_DATA_API_BASE_URL`.
+
+2.  Access in loader: `const baseUrl = process.env.STORYBOOK_TYPO3_DATA_API_BASE_URL;`
+
+### Detailed Story Example with Loaders
+
+This example demonstrates fetching data for a specific content element from a TYPO3 API and rendering it with `FluidTemplate`.
+
+```typescript
+// src/stories/DynamicContentElement.stories.ts
+import type { Meta, StoryObj, StoryContext } from '@storybook/html';
+// Assuming FluidTemplate is imported, e.g., from the package or a local copy
+import FluidTemplate from 'typo3fluid2storybook-addon';
+
+interface ContentElementData {
+  // Define the expected structure of your content element data
+  uid: number;
+  header?: string;
+  bodytext?: string;
+  // ... other fields
+}
+
+interface DynamicContentArgs {
+  contentElementUid: number;
+  templatePath: string;
+  // Other static args for the story can be added here
+}
+
+// Type for the data returned by the loader
+interface LoadedData {
+  contentElementData?: ContentElementData;
+  error?: Error;
+}
+
+const meta: Meta<DynamicContentArgs> = {
+  title: 'TYPO3/Dynamic Content Element',
+  argTypes: {
+    contentElementUid: { control: 'number', defaultValue: 1 },
+    templatePath: {
+      control: 'text',
+      defaultValue: 'EXT:my_extension/Resources/Private/Templates/ContentElements/Text.html'
+    },
+  },
+  loaders: [
+    async (context: StoryContext<DynamicContentArgs>): Promise<LoadedData> => {
+      const { args } = context;
+      const { contentElementUid } = args; // Get UID from story args
+
+      // Ensure your Storybook setup correctly loads and provides this env var.
+      // For Vite, it might be import.meta.env.VITE_TYPO3_DATA_API_BASE_URL
+      const apiBaseUrl = process.env.STORYBOOK_TYPO3_DATA_API_BASE_URL || '/api/data'; // Fallback for safety
+
+      if (!contentElementUid) {
+        return { error: new Error('Content Element UID is not provided.') };
+      }
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/content_element/${contentElementUid}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content element data: ${response.status} ${response.statusText}`);
+        }
+        const data: ContentElementData = await response.json();
+        return { contentElementData: data };
+      } catch (error: any) {
+        console.error('Loader error fetching content element:', error);
+        return { error: error instanceof Error ? error : new Error('Unknown loader error') };
+      }
+    },
+  ],
+  render: (args, { loaded }: { loaded: LoadedData }) => {
+    const { templatePath, ...storyArgs } = args; // storyArgs contains contentElementUid
+
+    // Handle loading state (if data is not yet available and no error was thrown/returned by loader)
+    // Note: Storybook typically awaits loaders, so you might not see this state unless data fetching is slow
+    // or if you return partial data progressively (more advanced).
+    if (loaded === undefined && !loaded?.error) { // loaded can be undefined if loader is still running or failed early
+      return '<div>Loading content element data...</div>';
+    }
+
+    // Handle error state from loader
+    if (loaded.error) {
+      return `<div style="color: red; border: 1px solid red; padding: 10px;">
+                <strong>Error loading data:</strong> ${loaded.error.message}
+              </div>`;
+    }
+
+    // Data is loaded, render the template
+    if (loaded.contentElementData) {
+      return FluidTemplate({
+        templatePath: templatePath,
+        variables: {
+          // Structure variables as your Fluid template expects them
+          data: loaded.contentElementData, // e.g., pass the whole data object
+          settings: storyArgs, // Pass other story args if needed by the template
+          // Example: headline: loaded.contentElementData.header (if you want to map specific fields)
+        },
+      });
+    }
+
+    return '<div>No content element data loaded, or an unknown issue occurred.</div>';
+  },
+};
+export default meta;
+
+type Story = StoryObj<DynamicContentArgs>;
+
+export const TextElement: Story = {
+  args: {
+    contentElementUid: 1, // Example UID for a text element
+    templatePath: 'EXT:my_site_package/Resources/Private/Templates/ContentElements/Text.html',
+  },
+};
+
+export const TextMediaElement: Story = {
+  args: {
+    contentElementUid: 2, // Example UID for a textmedia element
+    templatePath: 'EXT:my_site_package/Resources/Private/Templates/ContentElements/TextMedia.html',
+  },
+};
+
+export const NonExistentElement: Story = {
+    args: {
+        contentElementUid: 9999, // An ID that likely doesn't exist
+        templatePath: 'EXT:my_site_package/Resources/Private/Templates/ContentElements/Text.html',
+    }
+}
+```
+
+### Guidance on TYPO3 Data API
+
+To support the Storybook loader example above, you would need to implement an API endpoint in your TYPO3 installation.
+
+*   **Functionality:**
+    *   The endpoint (e.g., `/api/data/content_element/{uid}`) should accept an identifier (like a content element UID).
+    *   It should fetch the corresponding data from your TYPO3 database (e.g., using TYPO3's QueryBuilder, Repositories, or custom queries).
+    *   It should then format this data into a JSON structure that your Fluid template expects as variables.
+    *   Return the JSON response.
+*   **Example (Conceptual TYPO3 Controller Action):**
+    ```php
+    // In a TYPO3 Controller (e.g., an Extbase ActionController or PSR-15 Middleware)
+    public function getContentElementAction(int $uid): ResponseInterface
+    {
+        // 1. Fetch data for content element with $uid
+        // $contentElement = $this->myContentRepository->findByUid($uid);
+        // 2. Process/transform data into an array/DTO as needed for the Fluid template
+        // $dataForFluid = [
+        //     'uid' => $contentElement->getUid(),
+        //     'header' => $contentElement->getHeader(),
+        //     'bodytext' => $contentElement->getBodytext(),
+        //     // ... other fields ...
+        // ];
+        // 3. Return as JSON response
+        // return $this->jsonResponse(json_encode($dataForFluid));
+
+        // Placeholder:
+        $dataForFluid = ['uid' => $uid, 'header' => 'Dynamic Header for UID ' . $uid, 'bodytext' => 'This is dynamic content.'];
+        if ($uid === 9999) { // Simulate not found
+            return new JsonResponse(['error' => 'Content element not found'], 404);
+        }
+        return new JsonResponse($dataForFluid);
+    }
+    ```
+*   **Important:** The structure of the JSON data returned by your API should directly map to the variables your Fluid template (e.g., `ContentElement.html`) is designed to work with. Implementing this TYPO3 data API is your responsibility and is outside the scope of this Storybook integration tool itself.
+
+Using loaders enables you to build highly representative previews of your TYPO3 content elements and pages directly in Storybook.
 
 ---
 
