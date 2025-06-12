@@ -231,6 +231,12 @@ This example demonstrates how to integrate a TYPO3 Fluid template (`PersonsListT
 
 Assuming you are using the `FluidTemplate` function, either by importing it from the package or by copying the built file (e.g., to `.storybook/typo3FluidTemplates.js`):
 
+```typescript
+// If installed as a package (recommended)
+import FluidTemplate from 'typo3fluid2storybook-addon';
+
+// OR if you copied the built file, e.g., dist/main.es.js to .storybook/typo3FluidTemplates.js
+// import FluidTemplate from '.storybook/typo3FluidTemplates.js';
 ```
 
 ### Define the Fluid Template Path
@@ -243,6 +249,22 @@ const PersonsListTeaserFluidpath = 'EXT:your_ext/Resources/Private/Partials/List
 
 ### Default Arguments
 
+Define default values for the template variables. With TypeScript, you can define an interface for your component's arguments.
+
+```typescript
+interface PersonTeaserArgs {
+  fullName: string;
+  image: string;
+  detailPage: string;
+  position: string;
+  work: string;
+  officeHours: string;
+  telephone: string;
+  room: string;
+  email: string;
+}
+
+const defaultArgs: PersonTeaserArgs = {
     fullName: 'Max Mustermann',
     image: 'https://placehold.co/400x400/cc006e/white',
     detailPage: '/detail-page',
@@ -336,227 +358,6 @@ export const PersonsListTeaserFluid: Story = {
   //   fullName: "Erika Mustermann",
   // }
 };
-
-export const AdminUser: ComplexStory = {
-  render: ComplexTemplate,
-  args: {
-    userData: {
-        name: 'Admin User',
-        roles: ['Administrator', 'SuperUser'],
-        id: 789,
-        isActive: true,
-        address: { street: '1 Admin Road', city: 'Control Panel' }
-    },
-    items: [
-        { title: 'Admin Task 1', value: 'task_a', data: { priority: 'high' } },
-        { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
-    ],
-    pageTitle: "Admin View - Complex Component"
-  },
-};
-```
-
-**Conceptual Fluid Template Snippet:**
-
-This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/ComplexComponent.html` might consume the variables passed above.
-
-```html
-<!-- EXT:my_ext/Resources/Private/Templates/ComplexComponent.html (Conceptual) -->
-<h2>{title}</h2>
-
-<div class="user-profile" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-  <h3>User: {user.name} (ID: {user.id})</h3>
-  <p>Status: <f:if condition="{user.isActive}">Active</f:if><f:else>Inactive</f:else></p>
-  <p>Address: {user.address.street}, {user.address.city}</p>
-  <p>Roles:</p>
-  <ul>
-    <f:for each="{user.roles}" as="role">
-      <li>{role}</li>
-    </f:for>
-  </ul>
-</div>
-
-<div class="item-list" style="border: 1px solid #ccc; padding: 10px;">
-  <h4>Items ({itemList -> f:count()} items):</h4>
-  <ul>
-    <f:for each="{itemList}" as="item">
-      <li>
-        <strong>{item.title}</strong> (Value: {item.value})
-        <br />
-        <small>Data Count: {item.data.count -> f:if(condition: '{item.data.count}', else: 'N/A')}</small>
-        <f:if condition="{item.data.priority}">
-            (Priority: {item.data.priority})
-        </f:if>
-      </li>
-    </f:for>
-  </ul>
-  <f:if condition="{itemList -> f:count()} == 0">
-      <p>No items to display.</p>
-  </f:if>
-</div>
-```
-This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
-```
-
-### Using Complex `argTypes` (Objects and Arrays)
-
-Storybook's `argTypes` allow for detailed configuration of controls, including those for complex data types like objects and arrays. These can be effectively used with `FluidTemplate` to pass structured data to your Fluid components.
-
-Below is an example demonstrating how to configure `argTypes` for object and array inputs and pass them to `FluidTemplate`, now using TypeScript.
-
-**Example Storybook Story (TypeScript):**
-
-```typescript
-// In your .stories.ts file
-import type { Meta, StoryObj } from '@storybook/html';
-// import FluidTemplate from 'typo3fluid2storybook-addon'; // Or your import path
-
-interface UserData {
-  name: string;
-  roles: string[];
-  id: number;
-  isActive: boolean;
-  address: { street: string; city: string };
-}
-
-interface Item {
-  title: string;
-  value: string;
-  data: { count: number; priority?: string };
-}
-
-interface ComplexComponentArgs {
-  templatePath: string;
-  userData: UserData;
-  items: Item[];
-  pageTitle: string;
-}
-
-const metaComplex: Meta<ComplexComponentArgs> = {
-  title: 'Components/ComplexFluidComponent',
-  parameters: {
-    layout: 'padded',
-  },
-  argTypes: {
-    templatePath: {
-      control: 'text',
-    },
-    userData: {
-      control: 'object',
-    },
-    items: {
-      control: 'array',
-    },
-    pageTitle: {
-        control: 'text',
-    }
-  },
-  args: { // Default values for the args
-    templatePath: 'EXT:my_ext/Resources/Private/Templates/ComplexComponent.html',
-    userData: {
-      name: 'Jane Doe',
-      roles: ['Editor', 'Reviewer'],
-      id: 123,
-      isActive: true,
-      address: { street: '123 Main St', city: 'Storybook City' }
-    },
-    items: [
-      { title: 'First Item', value: 'val1', data: { count: 10 } },
-      { title: 'Second Item', value: 'val2', data: { count: 25 } },
-      { title: 'Third Item', value: 'val3', data: { count: 5 } },
-    ],
-    pageTitle: 'My Complex Component View'
-  }
-};
-export default metaComplex;
-
-type ComplexStory = StoryObj<ComplexComponentArgs>;
-
-const ComplexTemplate: ComplexStory['render'] = (args: ComplexComponentArgs) => {
-  const { templatePath, userData, items, pageTitle, ...otherStorybookArgs } = args;
-
-  // console.log("Other Storybook Args not passed to Fluid:", otherStorybookArgs);
-
-  const fluidVariables = {
-    user: userData,
-    itemList: items,
-    title: pageTitle,
-  };
-
-  const htmlOutput = FluidTemplate({ // FluidTemplate is the function from this package
-    templatePath: templatePath,
-    variables: fluidVariables,
-  });
-
-  const container = document.createElement('div');
-  container.className = 'story-wrapper';
-  container.innerHTML = htmlOutput;
-  return container; // Or return htmlOutput string directly
-};
-
-export const Default: ComplexStory = {
-  render: ComplexTemplate,
-};
-
-export const AdminUser: ComplexStory = {
-  render: ComplexTemplate,
-  args: {
-    userData: {
-        name: 'Admin User',
-        roles: ['Administrator', 'SuperUser'],
-        id: 789,
-        isActive: true,
-        address: { street: '1 Admin Road', city: 'Control Panel' }
-    },
-    items: [
-        { title: 'Admin Task 1', value: 'task_a', data: { priority: 'high' } },
-        { title: 'Admin Task 2', value: 'task_b', data: { priority: 'medium' } },
-    ],
-    pageTitle: "Admin View - Complex Component"
-  },
-};
-```
-
-**Conceptual Fluid Template Snippet:**
-
-This is a conceptual look at how `EXT:my_ext/Resources/Private/Templates/ComplexComponent.html` might consume the variables passed above.
-
-```html
-<!-- EXT:my_ext/Resources/Private/Templates/ComplexComponent.html (Conceptual) -->
-<h2>{title}</h2>
-
-<div class="user-profile" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-  <h3>User: {user.name} (ID: {user.id})</h3>
-  <p>Status: <f:if condition="{user.isActive}">Active</f:if><f:else>Inactive</f:else></p>
-  <p>Address: {user.address.street}, {user.address.city}</p>
-  <p>Roles:</p>
-  <ul>
-    <f:for each="{user.roles}" as="role">
-      <li>{role}</li>
-    </f:for>
-  </ul>
-</div>
-
-<div class="item-list" style="border: 1px solid #ccc; padding: 10px;">
-  <h4>Items ({itemList -> f:count()} items):</h4>
-  <ul>
-    <f:for each="{itemList}" as="item">
-      <li>
-        <strong>{item.title}</strong> (Value: {item.value})
-        <br />
-        <small>Data Count: {item.data.count -> f:if(condition: '{item.data.count}', else: 'N/A')}</small>
-        <f:if condition="{item.data.priority}">
-            (Priority: {item.data.priority})
-        </f:if>
-      </li>
-    </f:for>
-  </ul>
-  <f:if condition="{itemList -> f:count()} == 0">
-      <p>No items to display.</p>
-  </f:if>
-</div>
-```
-This example illustrates how complex data structures managed by Storybook controls can be seamlessly passed to and rendered by your TYPO3 Fluid templates.
 ```
 
 ### Using Complex `argTypes` (Objects and Arrays)
@@ -1119,6 +920,50 @@ To support the Storybook loader example above, you would need to implement an AP
 *   **Important:** The structure of the JSON data returned by your API should directly map to the variables your Fluid template (e.g., `ContentElement.html`) is designed to work with. Implementing this TYPO3 data API is your responsibility and is outside the scope of this Storybook integration tool itself.
 
 Using loaders enables you to build highly representative previews of your TYPO3 content elements and pages directly in Storybook.
+
+---
+
+## Support for Advanced Fluid Features (ViewHelpers, Partials, Layouts, etc.)
+
+The `FluidTemplate` Storybook integration fully supports the use of advanced Fluid features because the actual rendering of your Fluid templates is handled by **your TYPO3 server environment**, not by this client-side tool.
+
+This means any Fluid syntax or feature that works in your TYPO3 version—including Core and custom ViewHelpers, inline syntax (`{myVar}`, `<f:if>`), partial rendering (`<f:render partial='...' />`), layouts (`<f:layout name="..." />`), and sections (`<f:section name="..." />`)—will be correctly processed by TYPO3. The resulting HTML from this server-side rendering is then displayed in Storybook.
+
+### User Responsibilities & Considerations
+
+*   **Server-Side API Endpoint:** The key is to ensure your TYPO3 API endpoint (the one that `FluidTemplate` calls, as described in "TYPO3 Setup (Fluid Rendering API)") correctly initializes and uses TYPO3's Fluid engine with the necessary context (e.g., controller context, request object).
+*   **Path Resolution:** Your TYPO3 backend setup must be able to resolve paths to Partials and Layouts correctly when rendering via the API. This usually means the extension providing these templates must be active and properly configured in your TYPO3 installation. The paths used in `<f:render partial="..." />` or `<f:layout name="..." />` should be resolvable by your Fluid StandaloneView or ControllerContext setup.
+*   **ViewHelper Context:** Some ViewHelpers, especially custom ones or those dealing with frontend-specific context (e.g., page UIDs, user sessions, TypoScript settings, site context), might require that context to be available or simulated within your API endpoint's rendering environment. If a ViewHelper doesn't behave as expected in Storybook, check the context in which your API renders the Fluid template. You might need to manually set up aspects of the TYPO3 environment (like `TSFE` or a `Site` object) if your ViewHelpers depend on them.
+*   **Testing:** It's always good practice to test complex components that rely heavily on specific ViewHelpers or context to ensure they render as expected in Storybook via the API.
+
+### Conceptual Example of an Advanced Fluid Template
+
+Consider the following Fluid template:
+
+```html
+<!-- Example: EXT:my_extension/Resources/Private/Templates/MyAdvancedComponent.html -->
+<f:layout name="Default" />
+
+<f:section name="Main">
+  <h2>{pageTitle}</h2>
+
+  <f:comment>Using a core ViewHelper</f:comment>
+  <f:format.case mode="upper">{subHeadline}</f:format.case>
+
+  <f:comment>Rendering a Partial from the same extension</f:comment>
+  <f:render partial="MyPartial" arguments="{items: myItemList}" />
+
+  <f:comment>Rendering a Partial from another extension</f:comment>
+  <f:render partial="OtherPartial" section="SomeSection" arguments="{foo: bar}" partialRootPaths="{0: 'EXT:other_extension/Resources/Private/Partials/'}" />
+
+  <f:comment>Using a custom ViewHelper</f:comment>
+  <myext:myCustomLinkViewHelper pageUid="{targetPageUid}" additionalClass="fancy-link">
+    Link Text
+  </myext:myCustomLinkViewHelper>
+</f:section>
+```
+
+If your TYPO3 API endpoint is correctly configured to render the above Fluid template (i.e., it can find the "Default" layout, resolve "MyPartial", understand `partialRootPaths` for "OtherPartial", and process the `myext:myCustomLinkViewHelper`), then `FluidTemplate` will display the final, fully-rendered HTML output in your Storybook story. The responsibility for making these Fluid features work lies with the server-side rendering setup.
 
 ---
 
