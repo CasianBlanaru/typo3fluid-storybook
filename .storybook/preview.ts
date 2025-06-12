@@ -1,5 +1,7 @@
-/** @type { import('@storybook/html').Preview } */
-const preview = {
+// .storybook/preview.ts
+import type { Preview } from '@storybook/html';
+
+const preview: Preview = {
   parameters: {
     controls: {
       matchers: {
