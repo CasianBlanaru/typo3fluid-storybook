@@ -21,27 +21,118 @@ The core logic is now written in **TypeScript** for improved maintainability and
 
 ---
 
+## Architecture Overview
+
+This project consists of **two complementary repositories** that work together to provide TYPO3 Fluid template integration with Storybook:
+
+### 🎨 Frontend Package (This Repository)
+- **Repository**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **Purpose**: Client-side Storybook integration
+- **Technology**: TypeScript/JavaScript, Storybook 8.x
+- **Main Function**: `FluidTemplate()` function for template rendering
+- **Distribution**: NPM package
+
+### 🔧 Backend Extension (Companion Repository)
+- **Repository**: [TYPO3 Storybook Extension](https://github.com/CasianBlanaru/Storybook)
+- **Purpose**: TYPO3 extension providing API endpoints
+- **Technology**: PHP 8.1+, TYPO3 12.4+
+- **API Endpoint**: `/api/fluid/render`
+- **Distribution**: TYPO3 extension
+- **Live Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+
+### 🔄 Integration Flow
+
+```
+Storybook Story → FluidTemplate() → POST /api/fluid/render → TYPO3 Extension → Fluid Rendering → HTML Response → Storybook UI
+```
+
 ## Installation and Setup
 
 ### Prerequisites
 
 *   **Node.js:** A recent LTS version is recommended (e.g., v18.x or v20.x). The CI environment for this project uses v22.x.
 *   **Storybook:** Version `^8.5.0` or compatible (as per `package.json`).
-*   **TYPO3 CMS:** Supported versions: v12.x, v11.x, v10.x. The integration relies on a corresponding TYPO3 extension that provides the Fluid rendering API.
-*   **TYPO3 Extension for Fluid Rendering:** A TYPO3 extension that exposes a `/fluid/render` (or similar) API endpoint is required. This endpoint is responsible for rendering Fluid templates and returning the HTML output.
+*   **TYPO3 CMS:** Supported versions: v12.x, v11.x, v10.x.
+*   **TYPO3 Storybook Extension:** Required companion extension from [GitHub](https://github.com/CasianBlanaru/Storybook)
 
-### TYPO3 Version Compatibility
+### Part 1: Install TYPO3 Backend Extension
 
-This integration tool is designed to work with TYPO3 versions 10.x, 11.x, and 12.x. The successful integration across these TYPO3 versions primarily depends on your ability to implement the server-side Fluid rendering API endpoint.
+**🔧 Backend Setup (Required First)**
 
-*   **API Contract:** The core `FluidTemplate` utility (client-side) communicates with your user-defined API endpoint. This endpoint must adhere to the expected JSON contract (see "API Documentation: `FluidTemplate(options)`" for request/response details).
-*   **Server-Side Implementation:** The specific PHP classes (e.g., for `StandaloneView`) and methods for creating API endpoints (e.g., PSR-15 middleware, eID, Extbase Controller Actions) may vary between TYPO3 versions. You should consult the official TYPO3 documentation for your specific version when implementing this server-side endpoint.
-*   **Client-Side Consistency:** No specific client-side code changes in this package are typically needed for different TYPO3 versions, provided the API contract is met.
-*   **Testing:** Users are encouraged to test their specific Fluid features and ViewHelpers with their chosen TYPO3 version, as behavior in a headless/API-rendered context might occasionally differ from full frontend rendering.
+1. **Install the TYPO3 Extension:**
+   ```bash
+   # Via Composer (Recommended)
+   composer require casian/typo3-storybook-extension
 
-### TYPO3 Setup (Fluid Rendering API)
+   # Or download from GitHub
+   git clone https://github.com/CasianBlanaru/Storybook.git typo3conf/ext/storybook
+   ```
 
-To use Fluid templates in Storybook, you need a TYPO3 extension that exposes your Fluid templates via an API endpoint (as detailed under "Prerequisites" and "TYPO3 Version Compatibility"). This endpoint will be called by the Storybook integration to fetch the rendered HTML. Remember to adapt your endpoint implementation based on your TYPO3 version (v10, v11, or v12) and its best practices.
+2. **Activate Extension:**
+   - Go to TYPO3 Backend → Extensions
+   - Activate "Storybook Fluid Integration"
+
+3. **Verify API Endpoint:**
+   - Test: `https://your-typo3-site.com/api/fluid/render`
+   - Should respond with method not allowed (405) for GET requests
+
+### Part 2: Install Frontend Package
+
+**🎨 Frontend Setup (This Package)**
+
+1. **Install via NPM:**
+   ```bash
+   npm install typo3fluid-storybook-js-integration
+   # or
+   yarn add typo3fluid-storybook-js-integration
+   ```
+
+2. **Or use the built distribution:**
+   ```bash
+   # Download from releases
+   wget https://github.com/CasianBlanaru/typo3fluid-to-storybook/releases/latest/download/dist.zip
+   ```
+
+### Part 3: Configuration & Integration
+
+**🔗 Connect Frontend & Backend**
+
+1. **Environment Configuration:**
+   Create `.env` in your Storybook project:
+   ```env
+   TYPO3FLUID_STORYBOOK_API_URL=https://your-typo3-site.com/api/fluid/render
+   ```
+
+2. **Import in Storybook Stories:**
+   ```typescript
+   import FluidTemplate from 'typo3fluid-storybook-js-integration';
+
+   const html = FluidTemplate({
+     templatePath: 'EXT:your_ext/Resources/Private/Templates/MyTemplate.html',
+     variables: { title: 'Hello World' }
+   });
+   ```
+
+> 📚 **For detailed setup instructions, see the [Integration Guide](INTEGRATION_GUIDE.md)**
+
+## Version Compatibility Matrix
+
+| Frontend Package | Backend Extension | TYPO3 Version | Node.js | Status |
+|------------------|-------------------|---------------|---------|---------|
+| ^0.1.0 | ^0.1.0 | 12.4+ | 18.x+ | ✅ Stable |
+| ^0.1.0 | ^0.1.0 | 11.5+ | 18.x+ | ⚠️ Beta |
+| ^0.1.0 | ^0.1.0 | 10.4+ | 18.x+ | ⚠️ Beta |
+
+## Repository Links
+
+- **📦 Frontend Package**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **🔧 Backend Extension**: [TYPO3 Storybook Extension](https://github.com/CasianBlanaru/Storybook)
+- **🌐 Live Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **📚 Documentation**: Available in both repositories
+
+### TYPO3 API Implementation
+
+The backend extension provides a complete implementation of the API endpoint. You don't need to implement it yourself - simply install the [companion TYPO3 extension](https://github.com/CasianBlanaru/Storybook).
 
 Here's a conceptual example of what this API endpoint should do:
 
@@ -523,6 +614,167 @@ This example illustrates how complex data structures managed by Storybook contro
 
 ---
 
+## Testing
+
+Diese Sektion beschreibt, wie Sie Tests für TYPO3Fluid-Storybook-JS-Integration ausführen und schreiben.
+
+### Test-Setup
+
+Das Projekt verwendet **Jest** als Testing-Framework mit **TypeScript-Support** und **jsdom** für DOM-Testing.
+
+```bash
+# Alle Tests ausführen
+npm test
+
+# Tests in Watch-Modus
+npm run test:watch
+
+# Tests mit Coverage Report
+npm run test:coverage
+
+# Tests für CI/CD (ohne Watch)
+npm run test:ci
+```
+
+### Test-Struktur
+
+```
+test/
+├── FluidTemplate.test.ts    # Unit Tests für FluidTemplate Funktion
+└── fixtures/                # Test-Fixtures und Mock-Daten
+```
+
+### Bestehende Tests
+
+#### FluidTemplate Unit Tests
+
+Die `FluidTemplate` Funktion wird umfassend getestet:
+
+- ✅ **Erfolgreiche Template-Renderung**
+- ✅ **Error-Handling** (Network-Fehler, API-Fehler, JSON-Parsing)
+- ✅ **Asset-Path Rewriting** für `typo3temp/` Assets
+- ✅ **Caching-Mechanismus** für Performance-Optimierung
+- ✅ **Parameter-Validierung** und Request-Body-Konstruktion
+
+#### Caching Tests
+
+Das In-Memory-Caching wird getestet für:
+
+- Cache-Hits bei identischen Parametern
+- Cache-Miss bei geänderten Parametern
+- Fehler werden nicht gecacht
+- Cache-Key-Generierung basierend auf allen Parametern
+
+### Testing Best Practices
+
+#### Unit Tests schreiben
+
+```typescript
+describe('FluidTemplate', () => {
+  describe('when API is available', () => {
+    test('should render template successfully', () => {
+      // Arrange
+      const options = {
+        templatePath: 'EXT:my_ext/Resources/Private/Templates/Test.html',
+        variables: { title: 'Test Title' }
+      };
+
+      // Act
+      const result = FluidTemplate(options);
+
+      // Assert
+      expect(result).toContain('<h1>Test Title</h1>');
+    });
+  });
+});
+```
+
+#### Storybook Interaction Tests
+
+Für komplexere Storybook-Tests können Sie Interaction Tests verwenden:
+
+```typescript
+// In your .stories.ts file
+import { expect, userEvent, within } from '@storybook/test';
+
+export const InteractiveTest: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+
+    await userEvent.click(button);
+    await expect(button).toHaveTextContent('Clicked');
+  }
+};
+```
+
+### TYPO3 Integration Testing
+
+#### Mock TYPO3 API für Tests
+
+```typescript
+// Mock API Response für Tests
+const mockApiResponse = {
+  html: '<div class="content">Mocked HTML</div>',
+  error: null
+};
+
+// XMLHttpRequest Mock
+jest.spyOn(window, 'XMLHttpRequest').mockImplementation(() => ({
+  open: jest.fn(),
+  send: jest.fn(),
+  setRequestHeader: jest.fn(),
+  status: 200,
+  responseText: JSON.stringify(mockApiResponse)
+}));
+```
+
+#### Testing mit echten TYPO3-Daten
+
+Für Integration Tests mit echten TYPO3-Daten:
+
+1. **Setup Test-TYPO3-Installation**
+2. **Konfigurieren Sie Test-API-Endpoint**
+3. **Verwenden Sie echte Template-Pfade**
+4. **Testen Sie mit produktionsähnlichen Daten**
+
+### Coverage Requirements
+
+- **Minimum**: 80% Code Coverage
+- **Target**: 90%+ für kritische Funktionen
+- **Ausnahmen**: Konfigurationsdateien, Type-Definitionen
+
+```bash
+# Coverage Report anzeigen
+npm run test:coverage
+
+# Coverage Report als HTML
+npm run test:coverage -- --coverageReporters=html
+```
+
+### CI/CD Testing
+
+Tests werden automatisch ausgeführt in:
+
+- **GitHub Actions** bei jedem Push/PR
+- **Pre-commit Hooks** (falls aktiviert)
+- **NPM publish** Pipeline
+
+### Debugging Tests
+
+```bash
+# Tests mit Debug-Output
+npm test -- --verbose
+
+# Einzelnen Test ausführen
+npm test -- --testNamePattern="should render template successfully"
+
+# Tests für spezifische Datei
+npm test FluidTemplate.test.ts
+```
+
+---
+
 ## Benefits
 
 - **Interactive Testing**: Test Fluid templates dynamically in Storybook.
@@ -967,42 +1219,180 @@ If your TYPO3 API endpoint is correctly configured to render the above Fluid tem
 
 ---
 
-## Live Storybook Demo & Deployment
+## Development Workflow
 
-This project's Storybook is automatically built and deployed to GitHub Pages, providing a live demonstration of the components and Fluid template integration.
+### 🔄 Multi-Repository Development
 
-### Automated Deployment
+When developing with both repositories:
 
-*   The Storybook instance is built and deployed via a GitHub Actions workflow defined in `.github/workflows/node.js.yml`.
-*   This deployment occurs automatically whenever changes are pushed to the `main` branch.
+1. **Backend First Approach:**
+   ```bash
+   # 1. Set up TYPO3 backend with extension
+   cd your-typo3-project
+   composer require casian/typo3-storybook-extension
 
-### Accessing the Live Demo
+   # 2. Start TYPO3 development server
+   php -S localhost:8000 -t public/
 
-*   **View the live Storybook deployment here: [Link to GitHub Pages Site]**
-*   *(Note: Replace `[Link to GitHub Pages Site]` with the actual URL once GitHub Pages is configured and deployed. The URL format is typically `https://<username>.github.io/<repository-name>/` or a custom domain if configured.)*
+   # 3. Test API endpoint
+   curl -X POST http://localhost:8000/api/fluid/render \
+     -H "Content-Type: application/json" \
+     -d '{"templatePath":"EXT:example/Resources/Private/Templates/Test.html"}'
+   ```
 
-### First-Time Setup for GitHub Pages (for Repository Maintainers)
+2. **Frontend Development:**
+   ```bash
+   # 1. Install frontend package
+   npm install typo3fluid-storybook-js-integration
 
-If you are the maintainer of this repository or a fork and want to enable GitHub Pages for the first time:
+   # 2. Configure environment
+   echo "TYPO3FLUID_STORYBOOK_API_URL=http://localhost:8000/api/fluid/render" > .env
 
-1.  **Wait for Initial Workflow Run:** After your first push to the `main` branch (or after configuring the workflow), the GitHub Actions workflow should attempt a deployment. This will automatically create a `gh-pages` branch (or the branch configured in the workflow) containing your built Storybook static files.
-2.  **Navigate to Repository Settings:** Go to your GitHub repository and click on the "Settings" tab.
-3.  **Go to 'Pages' Section:** In the left sidebar of the settings page, find and click on "Pages" (usually under the "Code and automation" section).
-4.  **Configure Source:**
-    *   Under "Build and deployment", for the "Source" option, select "Deploy from a branch".
-5.  **Select Branch and Folder:**
-    *   From the "Branch" dropdown that appears, choose the `gh-pages` branch (or the branch used by the `peaceiris/actions-gh-pages` action in your workflow, which defaults to `gh-pages`).
-    *   Ensure the folder is set to `/ (root)`.
-    *   Click "Save".
-6.  **Access Your Site:** GitHub will then build your Pages site from the specified branch and provide a URL (e.g., `https://<your-username>.github.io/<your-repository-name>/`). It might take a few minutes for the site to become live after saving. This is the URL you can use for the placeholder link above.
+   # 3. Start Storybook
+   npm run storybook
+   ```
 
-Once set up, subsequent pushes to `main` will automatically update the content on GitHub Pages.
+### 🚀 Deployment Options
+
+#### Option 1: Separate Deployments
+- **Backend**: Deploy TYPO3 extension to production TYPO3 instance
+- **Frontend**: Deploy Storybook to static hosting (Vercel, Netlify, GitHub Pages)
+
+#### Option 2: Integrated Deployment
+- **Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **Backend API**: Deployed TYPO3 instance with extension
+- **Frontend**: Storybook pointing to production API
+
+### 🔧 Configuration Management
+
+#### Environment Variables
+```env
+# Frontend (.env)
+TYPO3FLUID_STORYBOOK_API_URL=https://api.your-typo3.com/api/fluid/render
+
+# Backend (TYPO3 .env or LocalConfiguration.php)
+CORS_ALLOW_ORIGIN=https://your-storybook.vercel.app
+API_RATE_LIMIT=100
+```
+
+#### CORS Configuration
+The backend extension automatically handles CORS for development. For production:
+
+```php
+# In TYPO3 LocalConfiguration.php or .env
+$GLOBALS['TYPO3_CONF_VARS']['HTTP']['cors']['allowOrigin'] = 'https://your-storybook.vercel.app';
+```
+
+## Live Demo & Examples
+
+### 🌐 Live Storybook Instance
+- **URL**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **Backend API**: Connected to production TYPO3 instance
+- **Templates**: Live examples of Fluid template integration
+
+### 📋 Example Implementations
+View the live Storybook to see:
+- Basic Fluid template rendering
+- Complex template with ViewHelpers
+- Dynamic data loading
+- Error handling examples
+- Performance optimizations
+
+### 🔍 Repository Structure Comparison
+
+| Aspect | Frontend Package | Backend Extension |
+|--------|------------------|-------------------|
+| **Language** | TypeScript/JavaScript | PHP |
+| **Framework** | Storybook 8.x | TYPO3 12.4+ |
+| **Tests** | Jest + DOM Testing | PHPUnit + TYPO3 Testing |
+| **CI/CD** | GitHub Actions (Node.js) | GitHub Actions (PHP) |
+| **Quality** | ESLint + Prettier | PHPStan + PHP-CS-Fixer |
+| **Distribution** | NPM Package | TYPO3 Extension |
 
 ---
 
+## Integration Troubleshooting
+
+### 🔧 Common Integration Issues
+
+#### Backend Extension Not Working
+```bash
+# Check if extension is activated
+./vendor/bin/typo3 extension:list | grep storybook
+
+# Test API endpoint manually
+curl -X POST http://localhost:8000/api/fluid/render \
+  -H "Content-Type: application/json" \
+  -d '{"templatePath":"EXT:storybook/Resources/Private/Templates/Test.html"}'
+```
+
+#### CORS Issues
+```
+Error: Access blocked by CORS policy
+```
+**Solution**: Configure CORS in TYPO3 backend extension or use development proxy.
+
+#### Version Mismatches
+```
+Error: Incompatible API version
+```
+**Solution**: Check version compatibility matrix above and update both packages.
+
+#### Template Not Found
+```
+Error: Template file not found
+```
+**Solution**: Verify template path format and file existence:
+```bash
+# Check template exists
+ls typo3conf/ext/your_ext/Resources/Private/Templates/YourTemplate.html
+
+# Verify path format
+"templatePath": "EXT:your_ext/Resources/Private/Templates/YourTemplate.html"
+```
+
+### 🔍 Debug Mode
+
+Enable debug mode for detailed error information:
+
+**Frontend:**
+```env
+TYPO3FLUID_STORYBOOK_DEBUG=true
+```
+
+**Backend:**
+```php
+$GLOBALS['TYPO3_CONF_VARS']['STORYBOOK']['debug'] = true;
+```
+
+### 📞 Support & Community
+
+- **Frontend Issues**: [Create Issue](https://github.com/CasianBlanaru/typo3fluid-to-storybook/issues)
+- **Backend Issues**: [Create Issue](https://github.com/CasianBlanaru/Storybook/issues)
+- **Integration Questions**: Use discussions in either repository
+- **Email**: casianus@me.com
+
 ## Contributing
 
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+Contributions are welcome to both repositories!
+
+### Contributing to Frontend Package
+- Fork [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- Follow JavaScript/TypeScript standards
+- Add tests for new features
+- Update documentation
+
+### Contributing to Backend Extension
+- Fork [TYPO3 Storybook Extension](https://github.com/CasianBlanaru/Storybook)
+- Follow TYPO3 coding standards
+- Add PHPUnit tests
+- Update extension documentation
+
+### Cross-Repository Changes
+For features that require changes in both repositories:
+1. Create issues in both repositories
+2. Reference cross-repository changes in PRs
+3. Coordinate releases for compatibility
 
 ---
 
@@ -1012,6 +1402,63 @@ This package is licensed under the MIT License.
 
 ---
 
+## Release Coordination
+
+### 🔄 Synchronized Releases
+
+Both repositories coordinate releases to ensure compatibility:
+
+| Release Type | Frontend | Backend | Notes |
+|--------------|----------|---------|-------|
+| **Major** | 1.0.0 | 1.0.0 | Breaking changes, coordinated release |
+| **Minor** | 1.1.0 | 1.1.0 | New features, backward compatible |
+| **Patch** | 1.1.1 | 1.1.1 | Bug fixes, independent releases possible |
+
+### 📋 Release Process
+
+1. **Planning**: Coordinate features across both repositories
+2. **Development**: Implement changes in respective repositories
+3. **Testing**: Cross-repository integration testing
+4. **Release**: Synchronized versioning and changelog
+5. **Documentation**: Update both README files
+
+### 🏷️ Version Tags
+
+- Frontend: `v1.0.0` (NPM semver)
+- Backend: `v1.0.0` (TYPO3 extension version)
+- Compatibility documented in both repositories
+
+## Roadmap
+
+### 🎯 Frontend Package Roadmap
+- [ ] React/Vue/Angular adapters
+- [ ] Advanced caching strategies
+- [ ] WebSocket support for live reloading
+- [ ] Plugin architecture for custom ViewHelpers
+
+### 🎯 Backend Extension Roadmap
+- [ ] TYPO3 v13 compatibility
+- [ ] Advanced template debugging tools
+- [ ] Performance monitoring
+- [ ] Multi-site template isolation
+
+### 🤝 Joint Features
+- [ ] Template auto-discovery improvements
+- [ ] Real-time template editing
+- [ ] Advanced error reporting
+- [ ] Performance analytics
+
 ## Credits
 
-Developed by Casian Blanaru. Inspired by TYPO3 and Storybook integration workflows.
+**Developed by**: [Casian Blanaru](https://github.com/CasianBlanaru)
+
+**Inspired by**: TYPO3 and Storybook integration workflows
+
+**Special Thanks**:
+- TYPO3 Community for ViewHelper insights
+- Storybook Team for integration patterns
+- Contributors to both repositories
+
+### 🌟 Repository Stars & Contributions
+- **Frontend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/typo3fluid-to-storybook)](https://github.com/CasianBlanaru/typo3fluid-to-storybook/stargazers)
+- **Backend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/Storybook)](https://github.com/CasianBlanaru/Storybook/stargazers)

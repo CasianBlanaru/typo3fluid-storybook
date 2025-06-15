@@ -1,0 +1,46 @@
+{
+  "recommendations": [
+    // Essential for TypeScript/JavaScript development
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+
+    // Storybook specific
+    "storybook.storybook-vscode",
+
+    // Git and version control
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+
+    // Testing
+    "orta.vscode-jest",
+
+    // Code quality and productivity
+    "streetsidesoftware.code-spell-checker",
+    "gruntfuggly.todo-tree",
+    "aaron-bond.better-comments",
+    "bradlc.vscode-tailwindcss",
+
+    // Markdown
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+
+    // JSON and YAML
+    "redhat.vscode-yaml",
+
+    // Utilities
+    "ms-vscode.vscode-json",
+    "editorconfig.editorconfig",
+    "visualstudioexptteam.vscodeintellicode",
+
+    // Optional but useful
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.hexdump"
+  ],
+  "unwantedRecommendations": [
+    // Extensions that might conflict or are not needed
+    "ms-vscode.typescript-javascript-grammar",
+    "hookyqr.beautify"
+  ]
+}
