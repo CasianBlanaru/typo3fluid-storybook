@@ -23,22 +23,22 @@ export default defineConfig(({ command, mode }) => {
       emptyOutDir: true,
       chunkSizeWarningLimit: 1000,
       cssCodeSplit: true,
+      lib: {
+        entry: path.resolve(__dirname, 'src/main.entry.ts'),
+        name: 'Typo3FluidToStorybook', // Global variable name for UMD/IIFE builds
+        formats: ['es', 'umd'], // Generate ES and UMD formats
+        fileName: (format) => `main.${format}.js`, // Output as main.es.js and main.umd.js
+      },
       rollupOptions: {
-        input: {
-          main: path.resolve(__dirname, 'src/js/main.entry.js'),
-        },
+        // Externalize peer dependencies if any (none specified for this library yet)
+        // external: [],
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              return id
-                .toString()
-                .split('node_modules/')[1]
-                .split('/')[0]
-                .toString();
-            }
-          },
-          entryFileNames: 'src/js/[name].js',
-          chunkFileNames: 'src/js/[name]-[hash].js',
+          // Provide global variables to use in the UMD build
+          // for externalized deps if any
+          // globals: {},
+          // The following manualChunks, entryFileNames, chunkFileNames might conflict or be
+          // overridden by the lib mode. For library mode, it's simpler.
+          // We'll remove them for now to let lib mode dictate output structure.
         },
       },
       outDir: path.resolve(__dirname, 'dist'),
@@ -52,7 +52,7 @@ export default defineConfig(({ command, mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src/js'),
+        '@': path.resolve(__dirname, 'src'), // Point @ to src directory
       },
     },
     define: {
