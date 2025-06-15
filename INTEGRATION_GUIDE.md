@@ -18,7 +18,7 @@ This guide explains how to integrate both the **Frontend Package** and **Backend
 ## 📦 Repository Structure
 
 ### Frontend Package
-- **Repository**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **Repository**: [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - **Purpose**: Client-side Storybook integration
 - **Language**: TypeScript/JavaScript
 - **Distribution**: NPM Package
@@ -276,9 +276,9 @@ jobs:
 ## 📚 Additional Resources
 
 ### Documentation Links
-- **Frontend Package**: [README](https://github.com/CasianBlanaru/typo3fluid-to-storybook/blob/main/README.md)
+- **Frontend Package**: [README](https://github.com/CasianBlanaru/typo3fluid-storybook/blob/main/README.md)
 - **Backend Extension**: [README](https://github.com/CasianBlanaru/Storybook/blob/main/README.md)
-- **Live Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **Live Demo**: [typo3fluid-storybook.vercel.app](https://typo3fluid-storybook.vercel.app)
 
 ### Community & Support
 - **Issues**: Create issues in respective repositories

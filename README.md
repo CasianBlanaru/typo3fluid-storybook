@@ -1367,7 +1367,7 @@ $GLOBALS['TYPO3_CONF_VARS']['STORYBOOK']['debug'] = true;
 
 ### 📞 Support & Community
 
-- **Frontend Issues**: [Create Issue](https://github.com/CasianBlanaru/typo3fluid-to-storybook/issues)
+- **Frontend Issues**: [Create Issue](https://github.com/CasianBlanaru/typo3fluid-storybook/issues)
 - **Backend Issues**: [Create Issue](https://github.com/CasianBlanaru/Storybook/issues)
 - **Integration Questions**: Use discussions in either repository
 - **Email**: casianus@me.com
