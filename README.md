@@ -1460,5 +1460,5 @@ Both repositories coordinate releases to ensure compatibility:
 - Contributors to both repositories
 
 ### 🌟 Repository Stars & Contributions
-- **Frontend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/typo3fluid-to-storybook)](https://github.com/CasianBlanaru/typo3fluid-to-storybook/stargazers)
-- **Backend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/Storybook)](https://github.com/CasianBlanaru/Storybook/stargazers)
+- **Frontend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/typo3fluid-storybook?style=social)](https://github.com/CasianBlanaru/typo3fluid-storybook/stargazers)
+- **Backend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/Storybook?style=social)](https://github.com/CasianBlanaru/Storybook/stargazers)
