@@ -26,7 +26,7 @@ The core logic is now written in **TypeScript** for improved maintainability and
 This project consists of **two complementary repositories** that work together to provide TYPO3 Fluid template integration with Storybook:
 
 ### 🎨 Frontend Package (This Repository)
-- **Repository**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **Repository**: [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - **Purpose**: Client-side Storybook integration
 - **Technology**: TypeScript/JavaScript, Storybook 8.x
 - **Main Function**: `FluidTemplate()` function for template rendering
