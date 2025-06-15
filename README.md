@@ -125,9 +125,9 @@ Storybook Story → FluidTemplate() → POST /api/fluid/render → TYPO3 Extensi
 
 ## Repository Links
 
-- **📦 Frontend Package**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **📦 Frontend Package**: [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - **🔧 Backend Extension**: [TYPO3 Storybook Extension](https://github.com/CasianBlanaru/Storybook)
-- **🌐 Live Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **🌐 Live Demo**: [typo3fluid-storybook.vercel.app](https://typo3fluid-storybook.vercel.app)
 - **📚 Documentation**: Available in both repositories
 
 ### TYPO3 API Implementation
@@ -1377,7 +1377,7 @@ $GLOBALS['TYPO3_CONF_VARS']['STORYBOOK']['debug'] = true;
 Contributions are welcome to both repositories!
 
 ### Contributing to Frontend Package
-- Fork [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- Fork [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - Follow JavaScript/TypeScript standards
 - Add tests for new features
 - Update documentation
