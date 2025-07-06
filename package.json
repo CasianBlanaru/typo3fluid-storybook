@@ -112,13 +112,13 @@
     "storybook": "^8.5.0",
     "ts-jest": "^29.3.4",
     "typescript": "^5.8.3",
-    "vite": "6.1.6",
+    "vite": "6.2.7",
     "vite-bundle-analyzer": "^0.7.0"
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
     "minimist": "^1.2.8",
-    "vite-plugin-clean": "^1.0.0"
+    "vite-plugin-clean": "^2.0.1"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
