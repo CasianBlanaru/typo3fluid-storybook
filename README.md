@@ -26,7 +26,7 @@ The core logic is now written in **TypeScript** for improved maintainability and
 This project consists of **two complementary repositories** that work together to provide TYPO3 Fluid template integration with Storybook:
 
 ### 🎨 Frontend Package (This Repository)
-- **Repository**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **Repository**: [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - **Purpose**: Client-side Storybook integration
 - **Technology**: TypeScript/JavaScript, Storybook 8.x
 - **Main Function**: `FluidTemplate()` function for template rendering
@@ -125,9 +125,9 @@ Storybook Story → FluidTemplate() → POST /api/fluid/render → TYPO3 Extensi
 
 ## Repository Links
 
-- **📦 Frontend Package**: [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- **📦 Frontend Package**: [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - **🔧 Backend Extension**: [TYPO3 Storybook Extension](https://github.com/CasianBlanaru/Storybook)
-- **🌐 Live Demo**: [storybook-lyart-five.vercel.app](https://storybook-lyart-five.vercel.app)
+- **🌐 Live Demo**: [typo3fluid-storybook.vercel.app](https://typo3fluid-storybook.vercel.app)
 - **📚 Documentation**: Available in both repositories
 
 ### TYPO3 API Implementation
@@ -1367,7 +1367,7 @@ $GLOBALS['TYPO3_CONF_VARS']['STORYBOOK']['debug'] = true;
 
 ### 📞 Support & Community
 
-- **Frontend Issues**: [Create Issue](https://github.com/CasianBlanaru/typo3fluid-to-storybook/issues)
+- **Frontend Issues**: [Create Issue](https://github.com/CasianBlanaru/typo3fluid-storybook/issues)
 - **Backend Issues**: [Create Issue](https://github.com/CasianBlanaru/Storybook/issues)
 - **Integration Questions**: Use discussions in either repository
 - **Email**: casianus@me.com
@@ -1377,7 +1377,7 @@ $GLOBALS['TYPO3_CONF_VARS']['STORYBOOK']['debug'] = true;
 Contributions are welcome to both repositories!
 
 ### Contributing to Frontend Package
-- Fork [typo3fluid-storybook-js-integration](https://github.com/CasianBlanaru/typo3fluid-to-storybook)
+- Fork [typo3fluid-storybook](https://github.com/CasianBlanaru/typo3fluid-storybook)
 - Follow JavaScript/TypeScript standards
 - Add tests for new features
 - Update documentation
@@ -1460,5 +1460,5 @@ Both repositories coordinate releases to ensure compatibility:
 - Contributors to both repositories
 
 ### 🌟 Repository Stars & Contributions
-- **Frontend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/typo3fluid-to-storybook)](https://github.com/CasianBlanaru/typo3fluid-to-storybook/stargazers)
-- **Backend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/Storybook)](https://github.com/CasianBlanaru/Storybook/stargazers)
+- **Frontend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/typo3fluid-storybook?style=social)](https://github.com/CasianBlanaru/typo3fluid-storybook/stargazers)
+- **Backend**: [![GitHub stars](https://img.shields.io/github/stars/CasianBlanaru/Storybook?style=social)](https://github.com/CasianBlanaru/Storybook/stargazers)
